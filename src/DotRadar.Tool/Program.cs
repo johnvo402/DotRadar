@@ -4,72 +4,82 @@ using DotRadar.Tool;
 
 using Microsoft.Build.Locator;
 
-if (args.Length == 1 &&
-    args[0].Equals(
-        "list-rules",
-        StringComparison.OrdinalIgnoreCase))
+return await RunAsync(args);
+
+static async Task<int> RunAsync(string[] args)
 {
-    return ListRulesCommand.Execute(Console.Out);
-}
+    if (args.Length == 1 &&
+        args[0].Equals(
+            "list-rules",
+            StringComparison.OrdinalIgnoreCase))
+    {
+        return ListRulesCommand.Execute(Console.Out);
+    }
 
-if (args.Length != 2 ||
-    !args[0].Equals(
-        "scan",
-        StringComparison.OrdinalIgnoreCase))
-{
-    Console.Error.WriteLine("Usage:");
-    Console.Error.WriteLine("  dotradar scan <path>");
-    Console.Error.WriteLine("  dotradar list-rules");
+    if (!ScanCommandOptions.TryParse(
+            args,
+            out var options,
+            out var error))
+    {
+        Console.Error.WriteLine(error);
+        Console.Error.WriteLine();
 
-    return ExitCodes.InvalidArguments;
-}
+        PrintUsage(Console.Error);
 
-if (!MSBuildLocator.IsRegistered)
-{
-    MSBuildLocator.RegisterDefaults();
-}
+        return ExitCodes.InvalidArguments;
+    }
 
-return await RunScanAsync(args[1]);
-
-static async Task<int> RunScanAsync(string target)
-{
     try
     {
+        if (!MSBuildLocator.IsRegistered)
+        {
+            MSBuildLocator.RegisterDefaults();
+        }
+
         var scanner = new DotRadarScanner();
 
         var diagnostics = await scanner.ScanAsync(
-            target,
+            options.Target,
             CancellationToken.None);
 
-        if (diagnostics.Count == 0)
-        {
-            Console.WriteLine("No production risks found.");
-            return ExitCodes.Success;
-        }
+        DiagnosticOutputWriter.Write(
+            diagnostics,
+            options.Format,
+            Console.Out);
 
-        foreach (var diagnostic in diagnostics)
-        {
-            Console.WriteLine(
-                $"{diagnostic.RuleId}  " +
-                $"{diagnostic.Severity,-7}  " +
-                $"{diagnostic.FilePath}:" +
-                $"{diagnostic.Line}:" +
-                $"{diagnostic.Column}");
-
-            Console.WriteLine($"  {diagnostic.Message}");
-        }
-
-        Console.WriteLine();
-        Console.WriteLine(
-            $"{diagnostics.Count} diagnostic(s) found.");
-
-        return ExitCodes.DiagnosticsFound;
+        return diagnostics.Count == 0
+            ? ExitCodes.Success
+            : ExitCodes.DiagnosticsFound;
+    }
+    catch (OperationCanceledException)
+    {
+        Console.Error.WriteLine("Scan cancelled.");
+        return ExitCodes.InternalError;
+    }
+    catch (FileNotFoundException exception)
+    {
+        Console.Error.WriteLine(exception.Message);
+        return ExitCodes.ProjectLoadFailure;
+    }
+    catch (InvalidOperationException exception)
+    {
+        Console.Error.WriteLine(exception.Message);
+        return ExitCodes.ProjectLoadFailure;
     }
     catch (Exception exception)
     {
         Console.Error.WriteLine(
-            $"Failed to scan target: {exception.Message}");
+            $"Unexpected error: {exception.Message}");
 
-        return ExitCodes.ProjectLoadFailure;
+        return ExitCodes.InternalError;
     }
+}
+
+static void PrintUsage(TextWriter output)
+{
+    output.WriteLine("Usage:");
+    output.WriteLine(
+        "  dotradar scan <path> [--format text|json]");
+    output.WriteLine(
+        "  dotradar list-rules");
 }
