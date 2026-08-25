@@ -4,6 +4,9 @@
 ## Get latest from `dotnet new gitignore`
 *.sarif
 
+TestResults/
+*.trx
+
 # dotenv files
 .env
 

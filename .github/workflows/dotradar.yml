@@ -1,0 +1,82 @@
+name: DotRadar Analysis
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  security-events: write
+
+concurrency:
+  group: dotradar-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Pack DotRadar
+        run: >
+          dotnet pack
+          src/DotRadar.Tool/DotRadar.Tool.csproj
+          --configuration Release
+          --no-restore
+          --output artifacts/packages
+
+      - name: Install DotRadar
+        run: >
+          dotnet tool install
+          --tool-path artifacts/tool
+          DotRadar.Tool
+          --version 0.1.0
+          --add-source artifacts/packages
+
+      - name: Run DotRadar
+        run: >
+          ./artifacts/tool/dotradar
+          scan .
+          --format sarif
+          --fail-on error
+          > artifacts/dotradar.sarif
+
+      - name: Upload SARIF artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dotradar-sarif
+          path: artifacts/dotradar.sarif
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload to GitHub Code Scanning
+        if: >
+          always() &&
+          (
+            github.event_name != 'pull_request' ||
+            github.event.pull_request.head.repo.full_name ==
+            github.repository
+          )
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: artifacts/dotradar.sarif
+          category: dotradar

@@ -1,0 +1,161 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Show .NET information
+        run: dotnet --info
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: >
+          dotnet build
+          --configuration Release
+          --no-restore
+
+      - name: Test
+        run: >
+          dotnet test
+          --configuration Release
+          --no-build
+          --logger "trx"
+          --results-directory
+          "artifacts/test-results/${{ matrix.os }}"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-${{ matrix.os }}
+          path: artifacts/test-results/${{ matrix.os }}
+          if-no-files-found: error
+          retention-days: 14
+
+  package:
+    name: Package and smoke test
+    runs-on: ubuntu-latest
+    needs:
+      - test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Pack
+        run: >
+          dotnet pack
+          src/DotRadar.Tool/DotRadar.Tool.csproj
+          --configuration Release
+          --no-restore
+          --output artifacts/packages
+
+      - name: Install packed tool
+        run: >
+          dotnet tool install
+          --tool-path artifacts/tool
+          DotRadar.Tool
+          --version 0.1.0
+          --add-source artifacts/packages
+
+      - name: Verify version
+        run: ./artifacts/tool/dotradar --version
+
+      - name: Verify rule catalog
+        run: ./artifacts/tool/dotradar list-rules
+
+      - name: Scan clean sample
+        run: >
+          ./artifacts/tool/dotradar
+          scan samples/CleanWebApp
+
+      - name: Scan broken sample
+        shell: bash
+        run: |
+          set +e
+
+          ./artifacts/tool/dotradar \
+            scan samples/BrokenWebApp \
+            --format json \
+            > artifacts/broken-scan.json
+
+          exit_code=$?
+          set -e
+
+          if [ "$exit_code" -ne 2 ]; then
+            echo "Expected exit code 2 but received $exit_code."
+            exit 1
+          fi
+
+          echo "Broken sample correctly returned exit code 2."
+
+      - name: Validate JSON report
+        shell: bash
+        run: |
+          diagnostic_count=$(
+            jq '.diagnosticCount' artifacts/broken-scan.json
+          )
+
+          if [ "$diagnostic_count" -lt 2 ]; then
+            echo "Expected at least 2 diagnostics."
+            exit 1
+          fi
+
+      - name: Upload NuGet package
+        uses: actions/upload-artifact@v7
+        with:
+          name: dotradar-nuget
+          path: artifacts/packages/*.nupkg
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload smoke-test report
+        uses: actions/upload-artifact@v7
+        with:
+          name: dotradar-smoke-report
+          path: artifacts/broken-scan.json
+          if-no-files-found: error
+          retention-days: 14
