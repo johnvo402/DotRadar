@@ -75,4 +75,69 @@ public sealed class DotRadarConfigurationTests
 
         Assert.Contains("critical", exception.Message);
     }
+
+    [Fact]
+    public void Allows_schema_property()
+    {
+        var configuration =
+            DotRadarConfigurationLoader.Parse(
+                """
+            {
+              "$schema": "https://example.com/schema.json",
+              "rules": {
+                "DTR1101": {
+                  "severity": "error"
+                }
+              }
+            }
+            """);
+
+        Assert.Equal(
+            DotRadarSeverity.Error,
+            configuration.ResolveSeverity(
+                "DTR1101",
+                DotRadarSeverity.Warning));
+    }
+
+    [Fact]
+    public void Rejects_unknown_root_property()
+    {
+        var exception =
+            Assert.Throws<DotRadarConfigurationException>(
+                () => DotRadarConfigurationLoader.Parse(
+                    """
+                {
+                  "rule": {
+                    "DTR1101": {
+                      "severity": "error"
+                    }
+                  }
+                }
+                """));
+
+        Assert.Contains(
+            "Unknown property 'rule'",
+            exception.Message);
+    }
+
+    [Fact]
+    public void Rejects_unknown_rule_property()
+    {
+        var exception =
+            Assert.Throws<DotRadarConfigurationException>(
+                () => DotRadarConfigurationLoader.Parse(
+                    """
+                {
+                  "rules": {
+                    "DTR1101": {
+                      "severty": "error"
+                    }
+                  }
+                }
+                """));
+
+        Assert.Contains(
+            "Unknown property 'severty'",
+            exception.Message);
+    }
 }

@@ -44,6 +44,13 @@ public static class DotRadarConfigurationLoader
             throw new DotRadarConfigurationException(
                 "DotRadar configuration must be a JSON object.");
         }
+        ValidateAllowedProperties(
+            root,
+            "configuration",
+            "$schema",
+            "rules");
+
+        ValidateSchemaProperty(root);
 
         if (!root.TryGetProperty("rules", out var rulesElement))
         {
@@ -69,6 +76,11 @@ public static class DotRadarConfigurationLoader
                     $"Configuration for rule '{ruleProperty.Name}' " +
                     "must be a JSON object.");
             }
+            ValidateAllowedProperties(
+                ruleProperty.Value,
+                $"rule '{ruleProperty.Name}'",
+                "enabled",
+                "severity");
 
             var enabled = ReadEnabled(
                 ruleProperty.Name,
@@ -152,5 +164,41 @@ public static class DotRadarConfigurationLoader
         return new DotRadarConfiguration(
             new Dictionary<string, DotRadarRuleConfiguration>(
                 StringComparer.OrdinalIgnoreCase));
+    }
+
+    private static void ValidateSchemaProperty(
+    JsonElement root)
+    {
+        if (!root.TryGetProperty(
+                "$schema",
+                out var schemaElement))
+        {
+            return;
+        }
+
+        if (schemaElement.ValueKind != JsonValueKind.String)
+        {
+            throw new DotRadarConfigurationException(
+                "The '$schema' property must be a string.");
+        }
+    }
+
+    private static void ValidateAllowedProperties(
+        JsonElement element,
+        string context,
+        params string[] allowedProperties)
+    {
+        var allowed = allowedProperties.ToHashSet(
+            StringComparer.Ordinal);
+
+        foreach (var property in element.EnumerateObject())
+        {
+            if (!allowed.Contains(property.Name))
+            {
+                throw new DotRadarConfigurationException(
+                    $"Unknown property '{property.Name}' " +
+                    $"in {context}.");
+            }
+        }
     }
 }

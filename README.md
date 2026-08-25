@@ -44,6 +44,18 @@ Create `.dotradar.json`:
   }
 }
 ```
+## Rules
+
+| Rule | Description | Default severity |
+|---|---|---|
+| [DTR1101](docs/rules/DTR1101.md) | Avoid blocking on asynchronous operations | Warning |
+| [DTR1102](docs/rules/DTR1102.md) | CancellationToken parameter is not used | Warning |
+
+## Documentation
+
+- [Configuration](docs/configuration.md)
+- [Baselines](docs/baseline.md)
+- [CI integration](docs/ci.md)
 
 ## Status
 

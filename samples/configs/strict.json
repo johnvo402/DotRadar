@@ -1,4 +1,5 @@
 {
+  "$schema": "../../schemas/dotradar.schema.json",
   "rules": {
     "DTR1101": {
       "enabled": true,

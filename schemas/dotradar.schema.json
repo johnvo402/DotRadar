@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/johnvo402/DotRadar/main/schemas/dotradar.schema.json",
+  "title": "DotRadar Configuration",
+  "description": "Configuration for the DotRadar .NET diagnostics tool.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema URL used by editors."
+    },
+    "rules": {
+      "type": "object",
+      "description": "Configuration for individual DotRadar rules.",
+      "additionalProperties": false,
+      "properties": {
+        "DTR1101": {
+          "$ref": "#/$defs/ruleConfiguration",
+          "description": "Avoid blocking on asynchronous operations."
+        },
+        "DTR1102": {
+          "$ref": "#/$defs/ruleConfiguration",
+          "description": "CancellationToken parameter is not used."
+        }
+      }
+    }
+  },
+  "$defs": {
+    "ruleConfiguration": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether the rule is enabled."
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "info",
+            "warning",
+            "error"
+          ],
+          "description": "Overrides the default rule severity."
+        }
+      }
+    }
+  }
+}
