@@ -63,4 +63,14 @@ public sealed class RuleRegistryTests
                 descriptor.DocumentationPath));
         });
     }
+
+    [Fact]
+    public void Default_rules_include_DTR1201()
+    {
+        var rules = RuleRegistry.CreateDefault();
+
+        Assert.Contains(
+            rules,
+            rule => rule.RuleId == "DTR1201");
+    }
 }
