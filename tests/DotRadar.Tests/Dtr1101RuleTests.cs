@@ -26,7 +26,7 @@ public sealed class Dtr1101RuleTests
             }
             """;
 
-        var document = CreateDocument(source);
+        var document = RoslynTestDocument.Create(source);
 
         var diagnostics = await new Dtr1101Rule()
             .AnalyzeAsync(document, CancellationToken.None);
@@ -56,7 +56,7 @@ public sealed class Dtr1101RuleTests
 
         var diagnostics = await new Dtr1101Rule()
             .AnalyzeAsync(
-                CreateDocument(source),
+                RoslynTestDocument.Create(source),
                 CancellationToken.None);
 
         Assert.Single(diagnostics);
@@ -83,7 +83,7 @@ public sealed class Dtr1101RuleTests
 
         var diagnostics = await new Dtr1101Rule()
             .AnalyzeAsync(
-                CreateDocument(source),
+                RoslynTestDocument.Create(source),
                 CancellationToken.None);
 
         Assert.Empty(diagnostics);
@@ -107,7 +107,7 @@ public sealed class Dtr1101RuleTests
 
         var diagnostics = await new Dtr1101Rule()
             .AnalyzeAsync(
-                CreateDocument(source),
+                RoslynTestDocument.Create(source),
                 CancellationToken.None);
 
         Assert.Empty(diagnostics);
@@ -128,7 +128,7 @@ public sealed class Dtr1101RuleTests
             }
             """;
 
-        var document = CreateDocument(
+        var document = RoslynTestDocument.Create(
             source,
             filePath: "Service.g.cs");
 
@@ -156,7 +156,7 @@ public sealed class Dtr1101RuleTests
 
         var diagnostics = await new Dtr1101Rule()
             .AnalyzeAsync(
-                CreateDocument(source),
+                RoslynTestDocument.Create(source),
                 CancellationToken.None);
 
         var diagnostic = Assert.Single(diagnostics);
@@ -182,7 +182,7 @@ public sealed class Dtr1101RuleTests
 
         var diagnostics = await new Dtr1101Rule()
             .AnalyzeAsync(
-                CreateDocument(source),
+                RoslynTestDocument.Create(source),
                 CancellationToken.None);
 
         var diagnostic = Assert.Single(diagnostics);
@@ -213,47 +213,11 @@ public sealed class Dtr1101RuleTests
 
         var diagnostics = await new Dtr1101Rule()
             .AnalyzeAsync(
-                CreateDocument(source),
+                RoslynTestDocument.Create(source),
                 CancellationToken.None);
 
         Assert.Empty(diagnostics);
     }
 
-    private static Document CreateDocument(
-        string source,
-        string filePath = "Test.cs")
-    {
-        var workspace = new AdhocWorkspace();
 
-        var project = workspace
-            .AddProject(
-                "DotRadar.TestProject",
-                LanguageNames.CSharp)
-            .WithCompilationOptions(
-                new CSharpCompilationOptions(
-                    OutputKind.DynamicallyLinkedLibrary))
-            .WithParseOptions(
-                new CSharpParseOptions(LanguageVersion.Latest))
-            .AddMetadataReferences(GetFrameworkReferences());
-
-        return project.AddDocument(
-            Path.GetFileName(filePath),
-            SourceText.From(source),
-            filePath: filePath);
-    }
-
-    private static IEnumerable<MetadataReference>
-        GetFrameworkReferences()
-    {
-        var trustedAssemblies =
-            AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")
-                as string
-            ?? throw new InvalidOperationException(
-                "Unable to locate platform assemblies.");
-
-        return trustedAssemblies
-            .Split(Path.PathSeparator)
-            .Select(path =>
-                MetadataReference.CreateFromFile(path));
-    }
 }
