@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/samples/">
     <Project Path="samples/BrokenWebApp/BrokenWebApp.csproj" />
+    <Project Path="samples/CleanWebApp/CleanWebApp.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/DotRadar.Abstractions/DotRadar.Abstractions.csproj" />

@@ -1,6 +1,7 @@
 using System.Text.Json;
 
 using DotRadar.Abstractions;
+using DotRadar.Analysis.Roslyn;
 using DotRadar.Tool;
 
 using Xunit;
@@ -27,7 +28,7 @@ public sealed class DiagnosticOutputWriterTests
         using var output = new StringWriter();
 
         DiagnosticOutputWriter.Write(
-            diagnostics,
+            CreateReport(diagnostics),
             DiagnosticOutputFormat.Json,
             output);
 
@@ -66,10 +67,11 @@ public sealed class DiagnosticOutputWriterTests
         using var output = new StringWriter();
 
         DiagnosticOutputWriter.Write(
-            [],
-            DiagnosticOutputFormat.Json,
-            output,
-            suppressedCount: 3);
+    CreateReport(
+        [],
+        suppressedCount: 3),
+    DiagnosticOutputFormat.Json,
+    output);
 
         using var document =
             JsonDocument.Parse(output.ToString());
@@ -99,10 +101,11 @@ public sealed class DiagnosticOutputWriterTests
         using var output = new StringWriter();
 
         DiagnosticOutputWriter.Write(
-            diagnostics,
-            DiagnosticOutputFormat.Json,
-            output,
-            failureThreshold: DotRadarSeverity.Error);
+                CreateReport(
+                    diagnostics,
+                    failureThreshold: DotRadarSeverity.Error),
+                DiagnosticOutputFormat.Json,
+                output);
 
         using var document =
             JsonDocument.Parse(output.ToString());
@@ -116,5 +119,114 @@ public sealed class DiagnosticOutputWriterTests
         Assert.Equal(
             0,
             root.GetProperty("failureCount").GetInt32());
+    }
+
+    [Fact]
+    public void Writes_sarif_2_1_0()
+    {
+        var directory = Path.Combine(
+            Path.GetTempPath(),
+            "dotradar-tests",
+            Guid.NewGuid().ToString("N"));
+
+        Directory.CreateDirectory(directory);
+
+        var filePath = Path.Combine(
+            directory,
+            "Service.cs");
+
+        try
+        {
+            File.WriteAllText(
+                filePath,
+                "return task.Result;");
+
+            var diagnostic = new DotRadarDiagnostic(
+                ruleId: "DTR1101",
+                title: "Avoid blocking",
+                message: "Use await instead.",
+                severity: DotRadarSeverity.Warning,
+                filePath: filePath,
+                line: 1,
+                column: 8);
+
+            var report = new DiagnosticReport(
+                diagnostics: [diagnostic],
+
+                rules: RuleRegistry.CreateDefault()
+                    .Select(rule => rule.Descriptor)
+                    .ToArray(),
+
+                baseDirectory: directory,
+                suppressedCount: 0,
+                failureThreshold: DotRadarSeverity.Warning);
+
+            using var output = new StringWriter();
+
+            DiagnosticOutputWriter.Write(
+                report,
+                DiagnosticOutputFormat.Sarif,
+                output);
+
+            using var document =
+                JsonDocument.Parse(output.ToString());
+
+            var root = document.RootElement;
+
+            Assert.Equal(
+                "2.1.0",
+                root.GetProperty("version").GetString());
+
+            var run = root.GetProperty("runs")[0];
+
+            Assert.Equal(
+                "DotRadar",
+                run.GetProperty("tool")
+                    .GetProperty("driver")
+                    .GetProperty("name")
+                    .GetString());
+
+            var result = run.GetProperty("results")[0];
+
+            Assert.Equal(
+                "DTR1101",
+                result.GetProperty("ruleId").GetString());
+
+            Assert.Equal(
+                "Service.cs",
+                result.GetProperty("locations")[0]
+                    .GetProperty("physicalLocation")
+                    .GetProperty("artifactLocation")
+                    .GetProperty("uri")
+                    .GetString());
+
+            Assert.True(
+                result.GetProperty("partialFingerprints")
+                    .TryGetProperty(
+                        "primaryLocationLineHash",
+                        out _));
+        }
+        finally
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+    }
+
+    private static DiagnosticReport CreateReport(
+        IReadOnlyList<DotRadarDiagnostic> diagnostics,
+        int suppressedCount = 0,
+        DotRadarSeverity failureThreshold =
+            DotRadarSeverity.Warning)
+    {
+        return new DiagnosticReport(
+            diagnostics: diagnostics,
+
+            rules: RuleRegistry.CreateDefault()
+                .Select(rule => rule.Descriptor)
+                .ToArray(),
+
+            baseDirectory: Directory.GetCurrentDirectory(),
+            suppressedCount: suppressedCount,
+            failureThreshold: failureThreshold);
     }
 }

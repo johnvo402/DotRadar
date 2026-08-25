@@ -100,16 +100,22 @@ internal sealed class ScanCommandOptions
                     format = DiagnosticOutputFormat.Text;
                 }
                 else if (value.Equals(
-                             "json",
-                             StringComparison.OrdinalIgnoreCase))
+                            "json",
+                            StringComparison.OrdinalIgnoreCase))
                 {
                     format = DiagnosticOutputFormat.Json;
+                }
+                else if (value.Equals(
+                    "sarif",
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    format = DiagnosticOutputFormat.Sarif;
                 }
                 else
                 {
                     error =
                         $"Unsupported output format: {value}. " +
-                        "Supported formats: text, json.";
+                        "Supported formats: text, json, sarif.";
 
                     return false;
                 }

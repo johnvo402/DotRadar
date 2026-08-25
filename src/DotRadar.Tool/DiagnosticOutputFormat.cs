@@ -3,5 +3,6 @@ namespace DotRadar.Tool;
 internal enum DiagnosticOutputFormat
 {
     Text,
-    Json
+    Json,
+    Sarif
 }

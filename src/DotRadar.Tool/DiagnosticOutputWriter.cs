@@ -1,44 +1,26 @@
 using System.Text.Json;
 
-using DotRadar.Abstractions;
-using DotRadar.Core;
-
 namespace DotRadar.Tool;
 
 internal static class DiagnosticOutputWriter
 {
     public static void Write(
-    IReadOnlyList<DotRadarDiagnostic> diagnostics,
-    DiagnosticOutputFormat format,
-    TextWriter output,
-    int suppressedCount = 0,
-    DotRadarSeverity failureThreshold =
-        DotRadarSeverity.Warning)
+        DiagnosticReport report,
+        DiagnosticOutputFormat format,
+        TextWriter output)
     {
-        var failureCount = diagnostics.Count(
-            diagnostic =>
-                DotRadarSeverityPolicy.MeetsThreshold(
-                    diagnostic.Severity,
-                    failureThreshold));
-
         switch (format)
         {
             case DiagnosticOutputFormat.Text:
-                WriteText(
-                    diagnostics,
-                    output,
-                    suppressedCount,
-                    failureThreshold,
-                    failureCount);
+                WriteText(report, output);
                 break;
 
             case DiagnosticOutputFormat.Json:
-                WriteJson(
-                    diagnostics,
-                    output,
-                    suppressedCount,
-                    failureThreshold,
-                    failureCount);
+                WriteJson(report, output);
+                break;
+
+            case DiagnosticOutputFormat.Sarif:
+                SarifOutputWriter.Write(report, output);
                 break;
 
             default:
@@ -50,27 +32,24 @@ internal static class DiagnosticOutputWriter
     }
 
     private static void WriteText(
-     IReadOnlyList<DotRadarDiagnostic> diagnostics,
-     TextWriter output,
-     int suppressedCount,
-     DotRadarSeverity failureThreshold,
-     int failureCount)
+        DiagnosticReport report,
+        TextWriter output)
     {
-        if (diagnostics.Count == 0)
+        if (report.Diagnostics.Count == 0)
         {
             output.WriteLine("No diagnostics found.");
 
-            if (suppressedCount > 0)
+            if (report.SuppressedCount > 0)
             {
                 output.WriteLine(
-                    $"{suppressedCount} diagnostic(s) suppressed " +
-                    "by baseline.");
+                    $"{report.SuppressedCount} diagnostic(s) " +
+                    "suppressed by baseline.");
             }
 
             return;
         }
 
-        foreach (var diagnostic in diagnostics)
+        foreach (var diagnostic in report.Diagnostics)
         {
             var severity = diagnostic.Severity
                 .ToString()
@@ -84,49 +63,59 @@ internal static class DiagnosticOutputWriter
         }
 
         output.WriteLine();
+
         output.WriteLine(
-            $"{diagnostics.Count} diagnostic(s) found.");
+            $"{report.Diagnostics.Count} diagnostic(s) found.");
+
+        if (report.SuppressedCount > 0)
+        {
+            output.WriteLine(
+                $"{report.SuppressedCount} diagnostic(s) " +
+                "suppressed by baseline.");
+        }
+
         output.WriteLine(
-            $"{failureCount} diagnostic(s) meet failure threshold " +
-            $"'{failureThreshold.ToString().ToLowerInvariant()}'.");
+            $"{report.FailureCount} diagnostic(s) meet failure " +
+            $"threshold '{report.FailureThreshold
+                .ToString()
+                .ToLowerInvariant()}'.");
     }
 
     private static void WriteJson(
-            IReadOnlyList<DotRadarDiagnostic> diagnostics,
-            TextWriter output,
-            int suppressedCount,
-            DotRadarSeverity failureThreshold,
-            int failureCount)
+        DiagnosticReport report,
+        TextWriter output)
     {
-        var report = new
+        var jsonReport = new
         {
             schemaVersion = "1.0",
-            diagnosticCount = diagnostics.Count,
-            suppressedCount,
+            diagnosticCount = report.Diagnostics.Count,
+            suppressedCount = report.SuppressedCount,
 
-            failureThreshold = failureThreshold
-              .ToString()
-              .ToLowerInvariant(),
+            failureThreshold = report.FailureThreshold
+                .ToString()
+                .ToLowerInvariant(),
 
-            failureCount,
+            failureCount = report.FailureCount,
 
-            diagnostics = diagnostics.Select(diagnostic => new
-            {
-                ruleId = diagnostic.RuleId,
-                title = diagnostic.Title,
-                message = diagnostic.Message,
+            diagnostics = report.Diagnostics.Select(
+                diagnostic => new
+                {
+                    ruleId = diagnostic.RuleId,
+                    title = diagnostic.Title,
+                    message = diagnostic.Message,
 
-                severity = diagnostic.Severity
-                    .ToString()
-                    .ToLowerInvariant(),
+                    severity = diagnostic.Severity
+                        .ToString()
+                        .ToLowerInvariant(),
 
-                filePath = diagnostic.FilePath,
-                line = diagnostic.Line,
-                column = diagnostic.Column
-            })
+                    filePath = diagnostic.FilePath,
+                    line = diagnostic.Line,
+                    column = diagnostic.Column
+                })
         };
+
         var json = JsonSerializer.Serialize(
-            report,
+            jsonReport,
             new JsonSerializerOptions
             {
                 WriteIndented = true
