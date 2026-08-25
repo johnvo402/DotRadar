@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/BrokenWebApp/BrokenWebApp.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/DotRadar.Abstractions/DotRadar.Abstractions.csproj" />
+    <Project Path="src/DotRadar.Analysis.Roslyn/DotRadar.Analysis.Roslyn.csproj" />
+    <Project Path="src/DotRadar.Core/DotRadar.Core.csproj" />
+    <Project Path="src/DotRadar.Tool/DotRadar.Tool.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DotRadar.Tests/DotRadar.Tests.csproj" />
+  </Folder>
+</Solution>
