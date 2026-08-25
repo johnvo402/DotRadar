@@ -1,6 +1,7 @@
 using System.Text.Json;
 
 using DotRadar.Abstractions;
+using DotRadar.Core;
 
 namespace DotRadar.Tool;
 
@@ -10,22 +11,34 @@ internal static class DiagnosticOutputWriter
     IReadOnlyList<DotRadarDiagnostic> diagnostics,
     DiagnosticOutputFormat format,
     TextWriter output,
-    int suppressedCount = 0)
+    int suppressedCount = 0,
+    DotRadarSeverity failureThreshold =
+        DotRadarSeverity.Warning)
     {
+        var failureCount = diagnostics.Count(
+            diagnostic =>
+                DotRadarSeverityPolicy.MeetsThreshold(
+                    diagnostic.Severity,
+                    failureThreshold));
+
         switch (format)
         {
             case DiagnosticOutputFormat.Text:
                 WriteText(
                     diagnostics,
                     output,
-                    suppressedCount);
+                    suppressedCount,
+                    failureThreshold,
+                    failureCount);
                 break;
 
             case DiagnosticOutputFormat.Json:
                 WriteJson(
                     diagnostics,
                     output,
-                    suppressedCount);
+                    suppressedCount,
+                    failureThreshold,
+                    failureCount);
                 break;
 
             default:
@@ -37,9 +50,11 @@ internal static class DiagnosticOutputWriter
     }
 
     private static void WriteText(
-       IReadOnlyList<DotRadarDiagnostic> diagnostics,
-       TextWriter output,
-       int suppressedCount)
+     IReadOnlyList<DotRadarDiagnostic> diagnostics,
+     TextWriter output,
+     int suppressedCount,
+     DotRadarSeverity failureThreshold,
+     int failureCount)
     {
         if (diagnostics.Count == 0)
         {
@@ -71,18 +86,29 @@ internal static class DiagnosticOutputWriter
         output.WriteLine();
         output.WriteLine(
             $"{diagnostics.Count} diagnostic(s) found.");
+        output.WriteLine(
+            $"{failureCount} diagnostic(s) meet failure threshold " +
+            $"'{failureThreshold.ToString().ToLowerInvariant()}'.");
     }
 
     private static void WriteJson(
-        IReadOnlyList<DotRadarDiagnostic> diagnostics,
-        TextWriter output,
-        int suppressedCount)
+            IReadOnlyList<DotRadarDiagnostic> diagnostics,
+            TextWriter output,
+            int suppressedCount,
+            DotRadarSeverity failureThreshold,
+            int failureCount)
     {
         var report = new
         {
             schemaVersion = "1.0",
             diagnosticCount = diagnostics.Count,
             suppressedCount,
+
+            failureThreshold = failureThreshold
+              .ToString()
+              .ToLowerInvariant(),
+
+            failureCount,
 
             diagnostics = diagnostics.Select(diagnostic => new
             {
@@ -99,7 +125,6 @@ internal static class DiagnosticOutputWriter
                 column = diagnostic.Column
             })
         };
-
         var json = JsonSerializer.Serialize(
             report,
             new JsonSerializerOptions

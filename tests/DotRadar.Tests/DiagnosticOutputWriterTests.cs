@@ -80,4 +80,41 @@ public sealed class DiagnosticOutputWriterTests
                 .GetProperty("suppressedCount")
                 .GetInt32());
     }
+
+    [Fact]
+    public void Json_contains_failure_information()
+    {
+        var diagnostics = new[]
+        {
+        new DotRadarDiagnostic(
+            ruleId: "DTR1101",
+            title: "Test",
+            message: "Test",
+            severity: DotRadarSeverity.Warning,
+            filePath: "Service.cs",
+            line: 1,
+            column: 1)
+    };
+
+        using var output = new StringWriter();
+
+        DiagnosticOutputWriter.Write(
+            diagnostics,
+            DiagnosticOutputFormat.Json,
+            output,
+            failureThreshold: DotRadarSeverity.Error);
+
+        using var document =
+            JsonDocument.Parse(output.ToString());
+
+        var root = document.RootElement;
+
+        Assert.Equal(
+            "error",
+            root.GetProperty("failureThreshold").GetString());
+
+        Assert.Equal(
+            0,
+            root.GetProperty("failureCount").GetInt32());
+    }
 }

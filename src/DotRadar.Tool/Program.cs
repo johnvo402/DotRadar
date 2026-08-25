@@ -117,15 +117,22 @@ static async Task<int> RunScanAsync(string[] args)
         diagnostics = filtered;
     }
 
+    var failureCount = diagnostics.Count(
+    diagnostic =>
+        DotRadarSeverityPolicy.MeetsThreshold(
+            diagnostic.Severity,
+            options.FailOn));
+
     DiagnosticOutputWriter.Write(
         diagnostics,
         options.Format,
         Console.Out,
-        suppressedCount);
+        suppressedCount,
+        options.FailOn);
 
-    return diagnostics.Count == 0
+    return failureCount == 0
         ? ExitCodes.Success
-        : ExitCodes.DiagnosticsFound;
+        : ExitCodes.PolicyViolation;
 }
 
 static async Task<int> RunBaselineAsync(string[] args)
@@ -219,10 +226,11 @@ static void PrintUsage(TextWriter output)
     output.WriteLine("Usage:");
 
     output.WriteLine(
-        "  dotradar scan <path> " +
-        "[--format text|json] " +
-        "[--config <path>] " +
-        "[--baseline <path>]");
+     "  dotradar scan <path> " +
+     "[--format text|json] " +
+     "[--config <path>] " +
+     "[--baseline <path>] " +
+     "[--fail-on info|warning|error]");
 
     output.WriteLine(
         "  dotradar baseline <path> " +

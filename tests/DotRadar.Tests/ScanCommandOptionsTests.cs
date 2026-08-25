@@ -1,3 +1,4 @@
+using DotRadar.Abstractions;
 using DotRadar.Tool;
 
 using Xunit;
@@ -102,5 +103,66 @@ public sealed class ScanCommandOptionsTests
         Assert.Equal(
             ".dotradar-baseline.json",
             parsed.BaselinePath);
+    }
+
+    [Fact]
+    public void Uses_warning_failure_threshold_by_default()
+    {
+        var success = ScanCommandOptions.TryParse(
+            ["scan", "."],
+            out var options,
+            out var error);
+
+        Assert.True(success);
+        Assert.Null(error);
+
+        var parsed =
+            Assert.IsType<ScanCommandOptions>(options);
+
+        Assert.Equal(
+            DotRadarSeverity.Warning,
+            parsed.FailOn);
+    }
+
+    [Fact]
+    public void Parses_error_failure_threshold()
+    {
+        var success = ScanCommandOptions.TryParse(
+            [
+                "scan",
+            ".",
+            "--fail-on",
+            "error"
+            ],
+            out var options,
+            out var error);
+
+        Assert.True(success);
+        Assert.Null(error);
+
+        var parsed =
+            Assert.IsType<ScanCommandOptions>(options);
+
+        Assert.Equal(
+            DotRadarSeverity.Error,
+            parsed.FailOn);
+    }
+
+    [Fact]
+    public void Rejects_invalid_failure_threshold()
+    {
+        var success = ScanCommandOptions.TryParse(
+            [
+                "scan",
+            ".",
+            "--fail-on",
+            "critical"
+            ],
+            out var options,
+            out var error);
+
+        Assert.False(success);
+        Assert.Null(options);
+        Assert.Contains("critical", error);
     }
 }

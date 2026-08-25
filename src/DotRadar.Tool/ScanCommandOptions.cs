@@ -1,5 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 
+using DotRadar.Abstractions;
+
 namespace DotRadar.Tool;
 
 internal sealed class ScanCommandOptions
@@ -8,12 +10,14 @@ internal sealed class ScanCommandOptions
         string target,
         DiagnosticOutputFormat format,
         string? configPath,
-        string? baselinePath)
+        string? baselinePath,
+        DotRadarSeverity failOn)
     {
         Target = target;
         Format = format;
         ConfigPath = configPath;
         BaselinePath = baselinePath;
+        FailOn = failOn;
     }
 
     public string Target { get; }
@@ -23,6 +27,8 @@ internal sealed class ScanCommandOptions
     public string? ConfigPath { get; }
 
     public string? BaselinePath { get; }
+
+    public DotRadarSeverity FailOn { get; }
 
     public static bool TryParse(
         string[] args,
@@ -59,6 +65,8 @@ internal sealed class ScanCommandOptions
         var configWasSpecified = false;
         string? baselinePath = null;
         var baselineWasSpecified = false;
+        var failOn = DotRadarSeverity.Warning;
+        var failOnWasSpecified = false;
 
         for (var index = 2; index < args.Length; index++)
         {
@@ -159,14 +167,67 @@ internal sealed class ScanCommandOptions
                 continue;
             }
 
+            if (argument.Equals(
+                "--fail-on",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                if (failOnWasSpecified)
+                {
+                    error =
+                        "The --fail-on option can only be specified once.";
+                    return false;
+                }
+
+                if (!TryReadValue(
+                        args,
+                        ref index,
+                        "--fail-on",
+                        out var value,
+                        out error))
+                {
+                    return false;
+                }
+
+                if (value.Equals(
+                        "info",
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    failOn = DotRadarSeverity.Info;
+                }
+                else if (value.Equals(
+                             "warning",
+                             StringComparison.OrdinalIgnoreCase))
+                {
+                    failOn = DotRadarSeverity.Warning;
+                }
+                else if (value.Equals(
+                             "error",
+                             StringComparison.OrdinalIgnoreCase))
+                {
+                    failOn = DotRadarSeverity.Error;
+                }
+                else
+                {
+                    error =
+                        $"Unsupported failure threshold: {value}. " +
+                        "Supported values: info, warning, error.";
+
+                    return false;
+                }
+
+                failOnWasSpecified = true;
+                continue;
+            }
+
             error = $"Unknown option: {argument}";
             return false;
         }
         options = new ScanCommandOptions(
-                target,
-                format,
-                configPath,
-                baselinePath);
+            target,
+            format,
+            configPath,
+            baselinePath,
+            failOn);
 
         return true;
     }
