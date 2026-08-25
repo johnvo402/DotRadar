@@ -21,7 +21,7 @@ static async Task<int> RunScanAsync(string target)
 {
     try
     {
-        var scanner = new Dtr1101Scanner();
+        var scanner = new DotRadarScanner();
 
         var diagnostics = await scanner.ScanAsync(
             target,

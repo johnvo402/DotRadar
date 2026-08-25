@@ -5,9 +5,11 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace DotRadar.Analysis.Roslyn;
 
-public sealed class Dtr1101Rule
+public sealed class Dtr1101Rule : IDotRadarRule
 {
-    private const string RuleId = "DTR1101";
+    private const string DiagnosticId = "DTR1101";
+
+    public string RuleId => DiagnosticId;
 
     private const string Title =
         "Avoid blocking on asynchronous operations";
@@ -194,7 +196,7 @@ public sealed class Dtr1101Rule
         var start = lineSpan.StartLinePosition;
 
         return new DotRadarDiagnostic(
-            ruleId: RuleId,
+            ruleId: DiagnosticId,
             title: Title,
             message: message,
             severity: DotRadarSeverity.Warning,

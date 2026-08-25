@@ -5,9 +5,18 @@ using Microsoft.CodeAnalysis.MSBuild;
 
 namespace DotRadar.Analysis.Roslyn;
 
-public sealed class Dtr1101Scanner
+public sealed class DotRadarScanner
 {
-    private readonly Dtr1101Rule _rule = new();
+    private readonly IReadOnlyList<IDotRadarRule> _rules;
+
+    public DotRadarScanner(
+        IEnumerable<IDotRadarRule>? rules = null)
+    {
+        _rules = (rules ?? RuleRegistry.CreateDefault())
+            .ToArray();
+
+        ValidateRules(_rules);
+    }
 
     public async Task<IReadOnlyList<DotRadarDiagnostic>> ScanAsync(
         string target,
@@ -32,12 +41,15 @@ public sealed class Dtr1101Scanner
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var documentDiagnostics =
-                    await _rule.AnalyzeAsync(
-                        document,
-                        cancellationToken);
+                foreach (var rule in _rules)
+                {
+                    var ruleDiagnostics =
+                        await rule.AnalyzeAsync(
+                            document,
+                            cancellationToken);
 
-                diagnostics.AddRange(documentDiagnostics);
+                    diagnostics.AddRange(ruleDiagnostics);
+                }
             }
         }
 
@@ -45,6 +57,7 @@ public sealed class Dtr1101Scanner
             .OrderBy(diagnostic => diagnostic.FilePath)
             .ThenBy(diagnostic => diagnostic.Line)
             .ThenBy(diagnostic => diagnostic.Column)
+            .ThenBy(diagnostic => diagnostic.RuleId)
             .ToArray();
     }
 
@@ -69,5 +82,22 @@ public sealed class Dtr1101Scanner
         return await workspace.OpenSolutionAsync(
             targetPath,
             cancellationToken: cancellationToken);
+    }
+
+    private static void ValidateRules(
+        IReadOnlyList<IDotRadarRule> rules)
+    {
+        var duplicateRuleId = rules
+            .GroupBy(
+                rule => rule.RuleId,
+                StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault(group => group.Count() > 1)
+            ?.Key;
+
+        if (duplicateRuleId is not null)
+        {
+            throw new InvalidOperationException(
+                $"Duplicate rule ID: {duplicateRuleId}");
+        }
     }
 }
