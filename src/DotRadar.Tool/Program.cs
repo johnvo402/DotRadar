@@ -1,12 +1,26 @@
 ﻿using DotRadar.Analysis.Roslyn;
 using DotRadar.Core;
+using DotRadar.Tool;
 
 using Microsoft.Build.Locator;
 
-if (args.Length != 2 ||
-    !string.Equals(args[0], "scan", StringComparison.OrdinalIgnoreCase))
+if (args.Length == 1 &&
+    args[0].Equals(
+        "list-rules",
+        StringComparison.OrdinalIgnoreCase))
 {
-    Console.Error.WriteLine("Usage: dotradar scan <solution|project|directory>");
+    return ListRulesCommand.Execute(Console.Out);
+}
+
+if (args.Length != 2 ||
+    !args[0].Equals(
+        "scan",
+        StringComparison.OrdinalIgnoreCase))
+{
+    Console.Error.WriteLine("Usage:");
+    Console.Error.WriteLine("  dotradar scan <path>");
+    Console.Error.WriteLine("  dotradar list-rules");
+
     return ExitCodes.InvalidArguments;
 }
 

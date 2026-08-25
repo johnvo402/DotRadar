@@ -9,11 +9,23 @@ public sealed class Dtr1101Rule : IDotRadarRule
 {
     private const string DiagnosticId = "DTR1101";
 
-    public string RuleId => DiagnosticId;
-
     private const string Title =
         "Avoid blocking on asynchronous operations";
 
+    private static readonly DotRadarRuleDescriptor RuleDescriptor =
+        new(
+            ruleId: DiagnosticId,
+            title: Title,
+            description:
+                "Detects synchronous blocking through Task.Result, " +
+                "Task.Wait() and GetAwaiter().GetResult().",
+            category: DotRadarCategory.Reliability,
+            defaultSeverity: DotRadarSeverity.Warning,
+            documentationPath: "docs/rules/DTR1101.md");
+
+    public string RuleId => DiagnosticId;
+
+    public DotRadarRuleDescriptor Descriptor => RuleDescriptor;
     public async Task<IReadOnlyList<DotRadarDiagnostic>> AnalyzeAsync(
         Document document,
         CancellationToken cancellationToken)

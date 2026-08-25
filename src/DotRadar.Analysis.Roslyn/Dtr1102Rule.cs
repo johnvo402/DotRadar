@@ -9,7 +9,20 @@ public sealed class Dtr1102Rule : IDotRadarRule
 {
     private const string DiagnosticId = "DTR1102";
 
+    private static readonly DotRadarRuleDescriptor RuleDescriptor =
+        new(
+            ruleId: DiagnosticId,
+            title: "CancellationToken parameter is not used",
+            description:
+                "Detects methods that declare a CancellationToken " +
+                "parameter but never use or propagate it.",
+            category: DotRadarCategory.Reliability,
+            defaultSeverity: DotRadarSeverity.Warning,
+            documentationPath: "docs/rules/DTR1102.md");
+
     public string RuleId => DiagnosticId;
+
+    public DotRadarRuleDescriptor Descriptor => RuleDescriptor;
 
     public async Task<IReadOnlyList<DotRadarDiagnostic>> AnalyzeAsync(
         Document document,

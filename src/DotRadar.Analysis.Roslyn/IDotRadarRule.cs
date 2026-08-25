@@ -8,6 +8,8 @@ public interface IDotRadarRule
 {
     string RuleId { get; }
 
+    DotRadarRuleDescriptor Descriptor { get; }
+
     Task<IReadOnlyList<DotRadarDiagnostic>> AnalyzeAsync(
         Document document,
         CancellationToken cancellationToken);

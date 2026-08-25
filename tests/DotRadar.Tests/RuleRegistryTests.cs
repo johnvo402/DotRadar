@@ -45,4 +45,22 @@ public sealed class RuleRegistryTests
 
         Assert.Contains("DTR1101", exception.Message);
     }
+
+    [Fact]
+    public void Default_rules_have_complete_metadata()
+    {
+        var rules = RuleRegistry.CreateDefault();
+
+        Assert.All(rules, rule =>
+        {
+            var descriptor = rule.Descriptor;
+
+            Assert.Equal(rule.RuleId, descriptor.RuleId);
+            Assert.False(string.IsNullOrWhiteSpace(descriptor.Title));
+            Assert.False(string.IsNullOrWhiteSpace(
+                descriptor.Description));
+            Assert.False(string.IsNullOrWhiteSpace(
+                descriptor.DocumentationPath));
+        });
+    }
 }
