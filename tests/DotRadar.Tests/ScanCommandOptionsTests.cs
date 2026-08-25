@@ -51,4 +51,33 @@ public sealed class ScanCommandOptionsTests
         Assert.Null(options);
         Assert.Contains("xml", error);
     }
+    [Fact]
+    public void Parses_config_path()
+    {
+        var success = ScanCommandOptions.TryParse(
+            [
+                "scan",
+            ".",
+            "--config",
+            "strict.json",
+            "--format",
+            "json"
+            ],
+            out var options,
+            out var error);
+
+        Assert.True(success);
+        Assert.Null(error);
+
+        var parsedOptions =
+            Assert.IsType<ScanCommandOptions>(options);
+
+        Assert.Equal(
+            "strict.json",
+            parsedOptions.ConfigPath);
+
+        Assert.Equal(
+            DiagnosticOutputFormat.Json,
+            parsedOptions.Format);
+    }
 }

@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "DTR1101": {
+      "enabled": true,
+      "severity": "error"
+    },
+    "DTR1102": {
+      "enabled": false
+    }
+  }
+}

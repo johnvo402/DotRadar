@@ -6,15 +6,19 @@ internal sealed class ScanCommandOptions
 {
     private ScanCommandOptions(
         string target,
-        DiagnosticOutputFormat format)
+        DiagnosticOutputFormat format,
+        string? configPath)
     {
         Target = target;
         Format = format;
+        ConfigPath = configPath;
     }
 
     public string Target { get; }
 
     public DiagnosticOutputFormat Format { get; }
+
+    public string? ConfigPath { get; }
 
     public static bool TryParse(
         string[] args,
@@ -47,58 +51,118 @@ internal sealed class ScanCommandOptions
         var target = args[1];
         var format = DiagnosticOutputFormat.Text;
         var formatWasSpecified = false;
+        string? configPath = null;
+        var configWasSpecified = false;
 
         for (var index = 2; index < args.Length; index++)
         {
             var argument = args[index];
 
-            if (!argument.Equals(
+            if (argument.Equals(
                     "--format",
                     StringComparison.OrdinalIgnoreCase))
             {
-                error = $"Unknown option: {argument}";
-                return false;
+                if (formatWasSpecified)
+                {
+                    error =
+                        "The --format option can only be specified once.";
+                    return false;
+                }
+
+                if (!TryReadValue(
+                        args,
+                        ref index,
+                        "--format",
+                        out var value,
+                        out error))
+                {
+                    return false;
+                }
+
+                if (value.Equals(
+                        "text",
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    format = DiagnosticOutputFormat.Text;
+                }
+                else if (value.Equals(
+                             "json",
+                             StringComparison.OrdinalIgnoreCase))
+                {
+                    format = DiagnosticOutputFormat.Json;
+                }
+                else
+                {
+                    error =
+                        $"Unsupported output format: {value}. " +
+                        "Supported formats: text, json.";
+
+                    return false;
+                }
+
+                formatWasSpecified = true;
+                continue;
             }
 
-            if (formatWasSpecified)
-            {
-                error = "The --format option can only be specified once.";
-                return false;
-            }
-
-            if (index + 1 >= args.Length)
-            {
-                error = "The --format option requires a value.";
-                return false;
-            }
-
-            var value = args[++index];
-
-            if (value.Equals(
-                    "text",
+            if (argument.Equals(
+                    "--config",
                     StringComparison.OrdinalIgnoreCase))
             {
-                format = DiagnosticOutputFormat.Text;
-            }
-            else if (value.Equals(
-                         "json",
-                         StringComparison.OrdinalIgnoreCase))
-            {
-                format = DiagnosticOutputFormat.Json;
-            }
-            else
-            {
-                error =
-                    $"Unsupported output format: {value}. " +
-                    "Supported formats: text, json.";
+                if (configWasSpecified)
+                {
+                    error =
+                        "The --config option can only be specified once.";
+                    return false;
+                }
 
-                return false;
+                if (!TryReadValue(
+                        args,
+                        ref index,
+                        "--config",
+                        out configPath,
+                        out error))
+                {
+                    return false;
+                }
+
+                configWasSpecified = true;
+                continue;
             }
 
-            formatWasSpecified = true;
+            error = $"Unknown option: {argument}";
+            return false;
+        }
+        options = new ScanCommandOptions(
+                target,
+                format,
+                configPath);
+        return true;
+    }
+
+    private static bool TryReadValue(
+    string[] args,
+    ref int index,
+    string option,
+    out string value,
+    [NotNullWhen(false)] out string? error)
+    {
+        value = string.Empty;
+        error = null;
+
+        if (index + 1 >= args.Length)
+        {
+            error = $"The {option} option requires a value.";
+            return false;
         }
 
-        options = new ScanCommandOptions(target, format);
+        value = args[++index];
+
+        if (value.StartsWith("--", StringComparison.Ordinal))
+        {
+            error = $"The {option} option requires a value.";
+            return false;
+        }
+
         return true;
     }
 }

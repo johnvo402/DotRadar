@@ -29,6 +29,8 @@ static async Task<int> RunAsync(string[] args)
         return ExitCodes.InvalidArguments;
     }
 
+
+
     try
     {
         if (!MSBuildLocator.IsRegistered)
@@ -36,20 +38,45 @@ static async Task<int> RunAsync(string[] args)
             MSBuildLocator.RegisterDefaults();
         }
 
-        var scanner = new DotRadarScanner();
+        var availableRules = RuleRegistry.CreateDefault();
 
-        var diagnostics = await scanner.ScanAsync(
+        var configurationPath =
+            DotRadarConfigurationLocator.Find(
+                options.Target,
+                options.ConfigPath);
+
+        var configuration =
+            DotRadarConfigurationLoader.Load(configurationPath);
+
+        configuration.ValidateKnownRules(
+            availableRules.Select(rule => rule.RuleId));
+
+        var enabledRules = availableRules
+            .Where(rule =>
+                configuration.IsEnabled(rule.RuleId))
+            .ToArray();
+
+        var scanner = new DotRadarScanner(enabledRules);
+
+        var rawDiagnostics = await scanner.ScanAsync(
             options.Target,
             CancellationToken.None);
 
-        DiagnosticOutputWriter.Write(
-            diagnostics,
-            options.Format,
-            Console.Out);
+        var diagnostics = rawDiagnostics
+            .Select(configuration.Apply)
+            .ToArray();
 
-        return diagnostics.Count == 0
+
+
+        DiagnosticOutputWriter.Write(
+     diagnostics,
+     options.Format,
+     Console.Out);
+
+        return diagnostics.Length == 0
             ? ExitCodes.Success
             : ExitCodes.DiagnosticsFound;
+
     }
     catch (OperationCanceledException)
     {
@@ -66,6 +93,13 @@ static async Task<int> RunAsync(string[] args)
         Console.Error.WriteLine(exception.Message);
         return ExitCodes.ProjectLoadFailure;
     }
+    catch (DotRadarConfigurationException exception)
+    {
+        Console.Error.WriteLine(
+            $"Configuration error: {exception.Message}");
+
+        return ExitCodes.InvalidArguments;
+    }
     catch (Exception exception)
     {
         Console.Error.WriteLine(
@@ -79,7 +113,8 @@ static void PrintUsage(TextWriter output)
 {
     output.WriteLine("Usage:");
     output.WriteLine(
-        "  dotradar scan <path> [--format text|json]");
+     "  dotradar scan <path> " +
+     "[--format text|json] [--config <path>]");
     output.WriteLine(
         "  dotradar list-rules");
 }
