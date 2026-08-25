@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "diagnostics": [
+    {
+      "fingerprint": "51d5abbac96a2cd4eb8fcbaf1993aa5d3725df368e445f27f3c449ecb0746e64",
+      "ruleId": "DTR1101",
+      "filePath": "Program.cs",
+      "line": 14,
+      "column": 18
+    },
+    {
+      "fingerprint": "57e3f2e81b15ea49e5df552e334a156315e0414e2bf1ddb497d568e0e331957a",
+      "ruleId": "DTR1102",
+      "filePath": "Services/ReportService.cs",
+      "line": 6,
+      "column": 27
+    }
+  ]
+}

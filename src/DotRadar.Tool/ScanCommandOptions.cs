@@ -7,11 +7,13 @@ internal sealed class ScanCommandOptions
     private ScanCommandOptions(
         string target,
         DiagnosticOutputFormat format,
-        string? configPath)
+        string? configPath,
+        string? baselinePath)
     {
         Target = target;
         Format = format;
         ConfigPath = configPath;
+        BaselinePath = baselinePath;
     }
 
     public string Target { get; }
@@ -19,6 +21,8 @@ internal sealed class ScanCommandOptions
     public DiagnosticOutputFormat Format { get; }
 
     public string? ConfigPath { get; }
+
+    public string? BaselinePath { get; }
 
     public static bool TryParse(
         string[] args,
@@ -53,6 +57,8 @@ internal sealed class ScanCommandOptions
         var formatWasSpecified = false;
         string? configPath = null;
         var configWasSpecified = false;
+        string? baselinePath = null;
+        var baselineWasSpecified = false;
 
         for (var index = 2; index < args.Length; index++)
         {
@@ -128,6 +134,30 @@ internal sealed class ScanCommandOptions
                 configWasSpecified = true;
                 continue;
             }
+            if (argument.Equals(
+                "--baseline",
+                StringComparison.OrdinalIgnoreCase))
+            {
+                if (baselineWasSpecified)
+                {
+                    error =
+                        "The --baseline option can only be specified once.";
+                    return false;
+                }
+
+                if (!TryReadValue(
+                        args,
+                        ref index,
+                        "--baseline",
+                        out baselinePath,
+                        out error))
+                {
+                    return false;
+                }
+
+                baselineWasSpecified = true;
+                continue;
+            }
 
             error = $"Unknown option: {argument}";
             return false;
@@ -135,7 +165,9 @@ internal sealed class ScanCommandOptions
         options = new ScanCommandOptions(
                 target,
                 format,
-                configPath);
+                configPath,
+                baselinePath);
+
         return true;
     }
 

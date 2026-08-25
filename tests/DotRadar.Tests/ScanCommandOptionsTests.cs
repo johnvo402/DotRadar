@@ -80,4 +80,27 @@ public sealed class ScanCommandOptionsTests
             DiagnosticOutputFormat.Json,
             parsedOptions.Format);
     }
+    [Fact]
+    public void Parses_baseline_path()
+    {
+        var success = ScanCommandOptions.TryParse(
+            [
+                "scan",
+            ".",
+            "--baseline",
+            ".dotradar-baseline.json"
+            ],
+            out var options,
+            out var error);
+
+        Assert.True(success);
+        Assert.Null(error);
+
+        var parsed =
+            Assert.IsType<ScanCommandOptions>(options);
+
+        Assert.Equal(
+            ".dotradar-baseline.json",
+            parsed.BaselinePath);
+    }
 }

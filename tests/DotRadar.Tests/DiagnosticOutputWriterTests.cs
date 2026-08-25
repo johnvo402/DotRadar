@@ -59,4 +59,25 @@ public sealed class DiagnosticOutputWriterTests
             "Service.cs",
             diagnostic.GetProperty("filePath").GetString());
     }
+
+    [Fact]
+    public void Json_contains_suppressed_count()
+    {
+        using var output = new StringWriter();
+
+        DiagnosticOutputWriter.Write(
+            [],
+            DiagnosticOutputFormat.Json,
+            output,
+            suppressedCount: 3);
+
+        using var document =
+            JsonDocument.Parse(output.ToString());
+
+        Assert.Equal(
+            3,
+            document.RootElement
+                .GetProperty("suppressedCount")
+                .GetInt32());
+    }
 }

@@ -7,18 +7,25 @@ namespace DotRadar.Tool;
 internal static class DiagnosticOutputWriter
 {
     public static void Write(
-        IReadOnlyList<DotRadarDiagnostic> diagnostics,
-        DiagnosticOutputFormat format,
-        TextWriter output)
+    IReadOnlyList<DotRadarDiagnostic> diagnostics,
+    DiagnosticOutputFormat format,
+    TextWriter output,
+    int suppressedCount = 0)
     {
         switch (format)
         {
             case DiagnosticOutputFormat.Text:
-                WriteText(diagnostics, output);
+                WriteText(
+                    diagnostics,
+                    output,
+                    suppressedCount);
                 break;
 
             case DiagnosticOutputFormat.Json:
-                WriteJson(diagnostics, output);
+                WriteJson(
+                    diagnostics,
+                    output,
+                    suppressedCount);
                 break;
 
             default:
@@ -30,12 +37,21 @@ internal static class DiagnosticOutputWriter
     }
 
     private static void WriteText(
-        IReadOnlyList<DotRadarDiagnostic> diagnostics,
-        TextWriter output)
+       IReadOnlyList<DotRadarDiagnostic> diagnostics,
+       TextWriter output,
+       int suppressedCount)
     {
         if (diagnostics.Count == 0)
         {
             output.WriteLine("No diagnostics found.");
+
+            if (suppressedCount > 0)
+            {
+                output.WriteLine(
+                    $"{suppressedCount} diagnostic(s) suppressed " +
+                    "by baseline.");
+            }
+
             return;
         }
 
@@ -59,12 +75,14 @@ internal static class DiagnosticOutputWriter
 
     private static void WriteJson(
         IReadOnlyList<DotRadarDiagnostic> diagnostics,
-        TextWriter output)
+        TextWriter output,
+        int suppressedCount)
     {
         var report = new
         {
             schemaVersion = "1.0",
             diagnosticCount = diagnostics.Count,
+            suppressedCount,
 
             diagnostics = diagnostics.Select(diagnostic => new
             {
