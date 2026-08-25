@@ -18,6 +18,33 @@ internal static class DotRadarApplication
     {
         try
         {
+            if (args.Length == 0)
+            {
+                PrintUsage(output);
+                return ExitCodes.Success;
+            }
+
+            if (args.Length == 1 && IsHelp(args[0]))
+            {
+                PrintUsage(output);
+                return ExitCodes.Success;
+            }
+
+            if (args.Length == 1 && IsVersion(args[0]))
+            {
+                output.WriteLine(
+                    $"DotRadar {ToolVersionProvider.GetVersion()}");
+
+                return ExitCodes.Success;
+            }
+
+            if (args.Length == 2 && IsHelp(args[1]))
+            {
+                return PrintCommandHelp(
+                    args[0],
+                    output,
+                    errorOutput);
+            }
             if (args.Length == 1 &&
                 args[0].Equals(
                     "list-rules",
@@ -50,7 +77,13 @@ internal static class DotRadarApplication
                     cancellationToken);
             }
 
+            errorOutput.WriteLine(
+                    $"Unknown command: {args[0]}");
+
+            errorOutput.WriteLine();
+
             PrintUsage(errorOutput);
+
             return ExitCodes.InvalidArguments;
         }
         catch (DotRadarConfigurationException exception)
@@ -69,8 +102,8 @@ internal static class DotRadarApplication
         }
         catch (OperationCanceledException)
         {
-            errorOutput.WriteLine("Scan cancelled.");
-            return ExitCodes.InternalError;
+            errorOutput.WriteLine("Operation cancelled.");
+            return ExitCodes.Canceled;
         }
         catch (FileNotFoundException exception)
         {
@@ -109,6 +142,7 @@ internal static class DotRadarApplication
 
             return ExitCodes.InvalidArguments;
         }
+        cancellationToken.ThrowIfCancellationRequested();
 
         var result = await AnalyzeAsync(
             options.Target,
@@ -172,6 +206,8 @@ internal static class DotRadarApplication
             return ExitCodes.InvalidArguments;
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
+
         var result = await AnalyzeAsync(
             options.Target,
             options.ConfigPath,
@@ -205,6 +241,7 @@ internal static class DotRadarApplication
         string? configPath,
         CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         EnsureMsBuildRegistered();
 
         var availableRules = RuleRegistry.CreateDefault();
@@ -260,26 +297,163 @@ internal static class DotRadarApplication
 
     private static void PrintUsage(TextWriter output)
     {
+        output.WriteLine(
+            "DotRadar - Production diagnostics for .NET projects");
+
+        output.WriteLine();
         output.WriteLine("Usage:");
+        output.WriteLine("  dotradar <command> [options]");
+        output.WriteLine();
+
+        output.WriteLine("Commands:");
 
         output.WriteLine(
-            "  dotradar scan <path> " +
-            "[--format text|json|sarif] " +
-            "[--config <path>] " +
-            "[--baseline <path>] " +
-            "[--fail-on info|warning|error]");
+            "  scan         Scan a project or solution");
 
         output.WriteLine(
-            "  dotradar baseline <path> " +
-            "[--output <path>] " +
-            "[--config <path>]");
+            "  baseline     Record existing diagnostics");
 
         output.WriteLine(
-            "  dotradar list-rules");
+            "  list-rules   List available diagnostic rules");
+
+        output.WriteLine();
+
+        output.WriteLine("Global options:");
+        output.WriteLine("  -h, --help       Show help");
+        output.WriteLine("  -v, --version    Show version");
+        output.WriteLine();
+
+        output.WriteLine(
+            "Run 'dotradar <command> --help' for details.");
     }
 
     private sealed record AnalysisResult(
         IReadOnlyList<DotRadarDiagnostic> Diagnostics,
         IReadOnlyList<DotRadarRuleDescriptor> Rules,
         string BaseDirectory);
+
+    private static bool IsHelp(string value)
+    {
+        return value.Equals(
+                   "--help",
+                   StringComparison.OrdinalIgnoreCase)
+               || value.Equals(
+                   "-h",
+                   StringComparison.OrdinalIgnoreCase)
+               || value.Equals(
+                   "help",
+                   StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsVersion(string value)
+    {
+        return value.Equals(
+                   "--version",
+                   StringComparison.OrdinalIgnoreCase)
+               || value.Equals(
+                   "-v",
+                   StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static int PrintCommandHelp(
+        string command,
+        TextWriter output,
+        TextWriter errorOutput)
+    {
+        if (command.Equals(
+                "scan",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            PrintScanHelp(output);
+            return ExitCodes.Success;
+        }
+
+        if (command.Equals(
+                "baseline",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            PrintBaselineHelp(output);
+            return ExitCodes.Success;
+        }
+
+        if (command.Equals(
+                "list-rules",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            PrintListRulesHelp(output);
+            return ExitCodes.Success;
+        }
+
+        errorOutput.WriteLine($"Unknown command: {command}");
+        PrintUsage(errorOutput);
+
+        return ExitCodes.InvalidArguments;
+    }
+
+    private static void PrintScanHelp(TextWriter output)
+    {
+        output.WriteLine("Scan a .NET project or solution.");
+        output.WriteLine();
+
+        output.WriteLine("Usage:");
+        output.WriteLine(
+            "  dotradar scan <path> [options]");
+
+        output.WriteLine();
+        output.WriteLine("Options:");
+
+        output.WriteLine(
+            "  --format <text|json|sarif>       " +
+            "Output format");
+
+        output.WriteLine(
+            "  --config <path>                  " +
+            "Configuration file");
+
+        output.WriteLine(
+            "  --baseline <path>                " +
+            "Suppress baseline diagnostics");
+
+        output.WriteLine(
+            "  --fail-on <info|warning|error>   " +
+            "Failure threshold");
+
+        output.WriteLine(
+            "  -h, --help                       " +
+            "Show command help");
+    }
+
+    private static void PrintBaselineHelp(TextWriter output)
+    {
+        output.WriteLine(
+            "Create a baseline from existing diagnostics.");
+
+        output.WriteLine();
+        output.WriteLine("Usage:");
+
+        output.WriteLine(
+            "  dotradar baseline <path> [options]");
+
+        output.WriteLine();
+        output.WriteLine("Options:");
+
+        output.WriteLine(
+            "  --output <path>   Baseline output path");
+
+        output.WriteLine(
+            "  --config <path>   Configuration file");
+
+        output.WriteLine(
+            "  -h, --help        Show command help");
+    }
+
+    private static void PrintListRulesHelp(TextWriter output)
+    {
+        output.WriteLine(
+            "List all diagnostic rules available in DotRadar.");
+
+        output.WriteLine();
+        output.WriteLine("Usage:");
+        output.WriteLine("  dotradar list-rules");
+    }
 }
