@@ -74,4 +74,24 @@ public sealed class RuleDocumentationTests
         throw new InvalidOperationException(
             "Unable to locate DotRadar repository root.");
     }
+
+    [Theory]
+    [InlineData("docs/getting-started.md")]
+    [InlineData("docs/configuration.md")]
+    [InlineData("docs/baseline.md")]
+    [InlineData("docs/ci.md")]
+    [InlineData("schemas/dotradar.schema.json")]
+    public void Required_documentation_exists(
+    string relativePath)
+    {
+        var repositoryRoot = FindRepositoryRoot();
+
+        var fullPath = Path.Combine(
+            repositoryRoot,
+            relativePath);
+
+        Assert.True(
+            File.Exists(fullPath),
+            $"Required documentation not found: {relativePath}");
+    }
 }
