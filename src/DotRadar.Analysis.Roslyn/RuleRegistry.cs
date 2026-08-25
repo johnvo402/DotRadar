@@ -7,7 +7,8 @@ public static class RuleRegistry
         return
         [
             new Dtr1101Rule(),
-            new Dtr1102Rule()
+            new Dtr1102Rule(),
+            new Dtr1201Rule()
         ];
     }
 }
