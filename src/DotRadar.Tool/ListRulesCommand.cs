@@ -15,11 +15,16 @@ internal static class ListRulesCommand
         output.WriteLine();
 
         output.WriteLine(
-            $"{"ID",-10} {"Severity",-10} {"Category",-16} Title");
+            $"{"ID",-10} " +
+            $"{"Severity",-10} " +
+            $"{"Confidence",-12} " +
+            $"{"Category",-16} " +
+            "Title");
 
         output.WriteLine(
             $"{new string('-', 8),-10} " +
             $"{new string('-', 8),-10} " +
+            $"{new string('-', 10),-12} " +
             $"{new string('-', 14),-16} " +
             $"{new string('-', 30)}");
 
@@ -30,6 +35,7 @@ internal static class ListRulesCommand
             output.WriteLine(
                 $"{descriptor.RuleId,-10} " +
                 $"{descriptor.DefaultSeverity,-10} " +
+                $"{descriptor.Confidence,-12} " +
                 $"{descriptor.Category,-16} " +
                 $"{descriptor.Title}");
         }

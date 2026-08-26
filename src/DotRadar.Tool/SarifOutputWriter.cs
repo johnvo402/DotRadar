@@ -69,7 +69,8 @@ internal static class SarifOutputWriter
                         .ToLowerInvariant()
                 },
 
-                precision = "high",
+                precision = ToSarifPrecision(
+                    rule.Confidence),
 
                 problem = new
                 {
@@ -240,5 +241,20 @@ internal static class SarifOutputWriter
         return version is null
             ? "0.1.0"
             : $"{version.Major}.{version.Minor}.{version.Build}";
+    }
+    private static string ToSarifPrecision(
+    DotRadarConfidence confidence)
+    {
+        return confidence switch
+        {
+            DotRadarConfidence.Low => "low",
+            DotRadarConfidence.Medium => "medium",
+            DotRadarConfidence.High => "high",
+
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(confidence),
+                confidence,
+                "Unsupported rule confidence.")
+        };
     }
 }

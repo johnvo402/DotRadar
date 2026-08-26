@@ -20,6 +20,7 @@ public sealed class Dtr1101Rule : IDotRadarRule
                 "Detects synchronous blocking through Task.Result, " +
                 "Task.Wait() and GetAwaiter().GetResult().",
             category: DotRadarCategory.Reliability,
+            confidence: DotRadarConfidence.High,
             defaultSeverity: DotRadarSeverity.Warning,
             documentationPath: "docs/rules/DTR1101.md");
 

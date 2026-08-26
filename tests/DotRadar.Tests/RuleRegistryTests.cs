@@ -56,11 +56,21 @@ public sealed class RuleRegistryTests
             var descriptor = rule.Descriptor;
 
             Assert.Equal(rule.RuleId, descriptor.RuleId);
-            Assert.False(string.IsNullOrWhiteSpace(descriptor.Title));
+            Assert.False(string.IsNullOrWhiteSpace(
+                descriptor.Title));
             Assert.False(string.IsNullOrWhiteSpace(
                 descriptor.Description));
             Assert.False(string.IsNullOrWhiteSpace(
                 descriptor.DocumentationPath));
+
+            Assert.True(
+                Enum.IsDefined(descriptor.Category));
+
+            Assert.True(
+                Enum.IsDefined(descriptor.Confidence));
+
+            Assert.True(
+                Enum.IsDefined(descriptor.DefaultSeverity));
         });
     }
 
