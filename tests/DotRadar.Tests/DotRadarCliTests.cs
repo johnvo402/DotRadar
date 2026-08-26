@@ -139,4 +139,22 @@ public sealed class DotRadarCliTests
             error.ToString(),
             StringComparison.OrdinalIgnoreCase);
     }
+
+    [Fact]
+    public async Task List_rules_displays_confidence()
+    {
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var exitCode = await DotRadarApplication.RunAsync(
+            ["list-rules"],
+            output,
+            error,
+            CancellationToken.None);
+
+        Assert.Equal(ExitCodes.Success, exitCode);
+        Assert.Contains("Confidence", output.ToString());
+        Assert.Contains("High", output.ToString());
+        Assert.Equal(string.Empty, error.ToString());
+    }
 }

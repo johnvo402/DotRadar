@@ -21,6 +21,7 @@ public sealed class Dtr1103Rule : IDotRadarRule
                 "Detects async void methods and local functions, " +
                 "excluding conventional event handlers.",
             category: DotRadarCategory.Reliability,
+            confidence: DotRadarConfidence.High,
             defaultSeverity: DotRadarSeverity.Warning,
             documentationPath: "docs/rules/DTR1103.md");
 

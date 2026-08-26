@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace DotRadar.Analysis.Roslyn;
 
-public sealed class DTR1001Rule : IDotRadarRule
+public sealed class Dtr1001Rule : IDotRadarRule
 {
     private const string DiagnosticId = "DTR1001";
 
@@ -20,6 +20,7 @@ public sealed class DTR1001Rule : IDotRadarRule
                 "Detects HttpClient instances created inside methods, " +
                 "local functions, accessors, or anonymous functions.",
             category: DotRadarCategory.Reliability,
+            confidence: DotRadarConfidence.High,
             defaultSeverity: DotRadarSeverity.Warning,
             documentationPath: "docs/rules/DTR1001.md");
 

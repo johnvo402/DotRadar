@@ -7,6 +7,7 @@ public sealed class DotRadarRuleDescriptor
         string title,
         string description,
         DotRadarCategory category,
+        DotRadarConfidence confidence,
         DotRadarSeverity defaultSeverity,
         string documentationPath)
     {
@@ -14,6 +15,7 @@ public sealed class DotRadarRuleDescriptor
         Title = title;
         Description = description;
         Category = category;
+        Confidence = confidence;
         DefaultSeverity = defaultSeverity;
         DocumentationPath = documentationPath;
     }
@@ -25,6 +27,8 @@ public sealed class DotRadarRuleDescriptor
     public string Description { get; }
 
     public DotRadarCategory Category { get; }
+
+    public DotRadarConfidence Confidence { get; }
 
     public DotRadarSeverity DefaultSeverity { get; }
 

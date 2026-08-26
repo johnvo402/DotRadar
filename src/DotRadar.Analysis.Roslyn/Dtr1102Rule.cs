@@ -17,6 +17,7 @@ public sealed class Dtr1102Rule : IDotRadarRule
                 "Detects methods that declare a CancellationToken " +
                 "parameter but never use or propagate it.",
             category: DotRadarCategory.Reliability,
+            confidence: DotRadarConfidence.High,
             defaultSeverity: DotRadarSeverity.Warning,
             documentationPath: "docs/rules/DTR1102.md");
 
