@@ -8,6 +8,7 @@ internal static class ListRulesCommand
     public static int Execute(TextWriter output)
     {
         var rules = RuleRegistry.CreateDefault()
+            .AllRules
             .OrderBy(rule => rule.RuleId)
             .ToArray();
 

@@ -12,7 +12,7 @@ public sealed class RuleDocumentationTests
     public void Every_rule_has_documentation()
     {
         var repositoryRoot = FindRepositoryRoot();
-        var rules = RuleRegistry.CreateDefault();
+        var rules = RuleRegistry.CreateDefault().AllRules;
 
         Assert.All(rules, rule =>
         {

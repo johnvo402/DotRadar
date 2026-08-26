@@ -7,15 +7,11 @@ namespace DotRadar.Analysis.Roslyn;
 
 public sealed class DotRadarScanner
 {
-    private readonly IReadOnlyList<IDocumentRule> _rules;
+    private readonly RuleSet _rules;
 
-    public DotRadarScanner(
-    IEnumerable<IDocumentRule>? rules = null)
+    public DotRadarScanner(RuleSet? rules = null)
     {
-        _rules = (rules ?? RuleRegistry.CreateDefault())
-            .ToArray();
-
-        ValidateRules(_rules);
+        _rules = rules ?? RuleRegistry.CreateDefault();
     }
 
     public async Task<IReadOnlyList<DotRadarDiagnostic>> ScanAsync(
@@ -37,25 +33,48 @@ public sealed class DotRadarScanner
              .Where(project =>
                  project.Language == LanguageNames.CSharp))
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var projectContext =
+                await ProjectAnalysisContext.CreateAsync(
+                    project,
+                    cancellationToken);
+
+            if (projectContext is null)
+            {
+                continue;
+            }
+
+            foreach (var rule in _rules.ProjectRules)
+            {
+                var ruleDiagnostics =
+                    await rule.AnalyzeAsync(
+                        projectContext,
+                        cancellationToken);
+
+                diagnostics.AddRange(ruleDiagnostics);
+            }
+
             foreach (var document in project.Documents)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var context =
+                var documentContext =
                     await DocumentAnalysisContext.CreateAsync(
+                        projectContext,
                         document,
                         cancellationToken);
 
-                if (context is null)
+                if (documentContext is null)
                 {
                     continue;
                 }
 
-                foreach (var rule in _rules)
+                foreach (var rule in _rules.DocumentRules)
                 {
                     var ruleDiagnostics =
                         await rule.AnalyzeAsync(
-                            context,
+                            documentContext,
                             cancellationToken);
 
                     diagnostics.AddRange(ruleDiagnostics);
@@ -94,20 +113,5 @@ public sealed class DotRadarScanner
             cancellationToken: cancellationToken);
     }
 
-    private static void ValidateRules(
-    IReadOnlyList<IDocumentRule> rules)
-    {
-        var duplicateRuleId = rules
-            .GroupBy(
-                rule => rule.RuleId,
-                StringComparer.OrdinalIgnoreCase)
-            .FirstOrDefault(group => group.Count() > 1)
-            ?.Key;
 
-        if (duplicateRuleId is not null)
-        {
-            throw new InvalidOperationException(
-                $"Duplicate rule ID: {duplicateRuleId}");
-        }
-    }
 }

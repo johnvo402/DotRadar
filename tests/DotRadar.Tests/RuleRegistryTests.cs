@@ -9,7 +9,7 @@ public sealed class RuleRegistryTests
     [Fact]
     public void Default_rules_have_unique_rule_ids()
     {
-        var rules = RuleRegistry.CreateDefault();
+        var rules = RuleRegistry.CreateDefault().AllRules;
 
         Assert.NotEmpty(rules);
 
@@ -24,7 +24,7 @@ public sealed class RuleRegistryTests
     [Fact]
     public void Default_rules_include_DTR1101()
     {
-        var rules = RuleRegistry.CreateDefault();
+        var rules = RuleRegistry.CreateDefault().AllRules;
 
         Assert.Contains(
             rules,
@@ -32,16 +32,17 @@ public sealed class RuleRegistryTests
     }
 
     [Fact]
-    public void Scanner_rejects_duplicate_rule_ids()
+    public void Rule_set_rejects_duplicate_rule_ids()
     {
         var duplicateRules = new IDocumentRule[]
         {
-            new Dtr1101Rule(),
-            new Dtr1101Rule()
+        new Dtr1101Rule(),
+        new Dtr1101Rule()
         };
 
         var exception = Assert.Throws<InvalidOperationException>(
-            () => new DotRadarScanner(duplicateRules));
+            () => new RuleSet(
+                documentRules: duplicateRules));
 
         Assert.Contains("DTR1101", exception.Message);
     }
@@ -49,7 +50,7 @@ public sealed class RuleRegistryTests
     [Fact]
     public void Default_rules_have_complete_metadata()
     {
-        var rules = RuleRegistry.CreateDefault();
+        var rules = RuleRegistry.CreateDefault().AllRules;
 
         Assert.All(rules, rule =>
         {
@@ -77,7 +78,7 @@ public sealed class RuleRegistryTests
     [Fact]
     public void Default_rules_include_DTR1001()
     {
-        var rules = RuleRegistry.CreateDefault();
+        var rules = RuleRegistry.CreateDefault().AllRules;
 
         Assert.Contains(
             rules,
@@ -87,7 +88,7 @@ public sealed class RuleRegistryTests
     [Fact]
     public void Default_rules_include_DTR1103()
     {
-        var rules = RuleRegistry.CreateDefault();
+        var rules = RuleRegistry.CreateDefault().AllRules;
 
         Assert.Contains(
             rules,

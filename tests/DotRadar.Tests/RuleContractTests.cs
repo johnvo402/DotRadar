@@ -17,12 +17,21 @@ public sealed class RuleContractTests
     [Fact]
     public void Default_registry_contains_document_rules()
     {
-        var rules = RuleRegistry.CreateDefault();
+        var ruleSet = RuleRegistry.CreateDefault();
 
-        Assert.NotEmpty(rules);
+        Assert.NotEmpty(ruleSet.DocumentRules);
+        Assert.Empty(ruleSet.ProjectRules);
 
         Assert.All(
-            rules,
+            ruleSet.DocumentRules,
             rule => Assert.IsAssignableFrom<IDocumentRule>(rule));
+    }
+
+    [Fact]
+    public void Project_rule_inherits_base_rule_contract()
+    {
+        Assert.True(
+            typeof(IDotRadarRule)
+                .IsAssignableFrom(typeof(IProjectRule)));
     }
 }

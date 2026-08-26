@@ -55,4 +55,39 @@ public sealed class DocumentAnalysisContextTests
 
         Assert.Null(context);
     }
+
+    [Fact]
+    public async Task Uses_project_context_compilation()
+    {
+        var document = RoslynTestDocument.Create(
+            """
+        public sealed class Service
+        {
+        }
+        """,
+            filePath: "Service.cs");
+
+        var projectContext =
+            await ProjectAnalysisContext.CreateAsync(
+                document.Project,
+                CancellationToken.None);
+
+        Assert.NotNull(projectContext);
+
+        var documentContext =
+            await DocumentAnalysisContext.CreateAsync(
+                projectContext,
+                document,
+                CancellationToken.None);
+
+        Assert.NotNull(documentContext);
+
+        Assert.Same(
+            projectContext.Compilation,
+            documentContext.Compilation);
+
+        Assert.Same(
+            projectContext,
+            documentContext.ProjectContext);
+    }
 }

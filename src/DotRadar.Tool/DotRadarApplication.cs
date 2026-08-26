@@ -244,7 +244,8 @@ internal static class DotRadarApplication
         cancellationToken.ThrowIfCancellationRequested();
         EnsureMsBuildRegistered();
 
-        var availableRules = RuleRegistry.CreateDefault();
+        var availableRuleSet =
+    RuleRegistry.CreateDefault();
 
         var configurationPath =
             DotRadarConfigurationLocator.Find(
@@ -256,14 +257,14 @@ internal static class DotRadarApplication
                 configurationPath);
 
         configuration.ValidateKnownRules(
-            availableRules.Select(rule => rule.RuleId));
+    availableRuleSet.AllRules.Select(
+        rule => rule.RuleId));
 
-        var enabledRules = availableRules
-            .Where(rule =>
-                configuration.IsEnabled(rule.RuleId))
-            .ToArray();
+        var enabledRuleSet = availableRuleSet.Filter(
+    rule => configuration.IsEnabled(rule.RuleId));
 
-        var scanner = new DotRadarScanner(enabledRules);
+        var scanner = new DotRadarScanner(
+    enabledRuleSet);
 
         var rawDiagnostics = await scanner.ScanAsync(
             target,
@@ -276,7 +277,7 @@ internal static class DotRadarApplication
         return new AnalysisResult(
             Diagnostics: diagnostics,
 
-            Rules: enabledRules
+           Rules: enabledRuleSet.AllRules
                 .Select(rule => rule.Descriptor)
                 .ToArray(),
 

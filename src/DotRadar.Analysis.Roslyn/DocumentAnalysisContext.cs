@@ -5,17 +5,20 @@ namespace DotRadar.Analysis.Roslyn;
 public sealed class DocumentAnalysisContext
 {
     private DocumentAnalysisContext(
+        ProjectAnalysisContext projectContext,
         Document document,
         string filePath,
         SyntaxNode syntaxRoot,
         SemanticModel semanticModel)
     {
+        ProjectContext = projectContext;
         Document = document;
         FilePath = filePath;
         SyntaxRoot = syntaxRoot;
         SemanticModel = semanticModel;
-        Compilation = semanticModel.Compilation;
     }
+
+    public ProjectAnalysisContext ProjectContext { get; }
 
     public Document Document { get; }
 
@@ -25,7 +28,8 @@ public sealed class DocumentAnalysisContext
 
     public SemanticModel SemanticModel { get; }
 
-    public Compilation Compilation { get; }
+    public Compilation Compilation =>
+        ProjectContext.Compilation;
 
     public static async Task<DocumentAnalysisContext?> CreateAsync(
         Document document,
@@ -33,13 +37,46 @@ public sealed class DocumentAnalysisContext
     {
         ArgumentNullException.ThrowIfNull(document);
 
+        var projectContext =
+            await ProjectAnalysisContext.CreateAsync(
+                document.Project,
+                cancellationToken);
+
+        if (projectContext is null)
+        {
+            return null;
+        }
+
+        return await CreateAsync(
+            projectContext,
+            document,
+            cancellationToken);
+    }
+
+    public static async Task<DocumentAnalysisContext?> CreateAsync(
+        ProjectAnalysisContext projectContext,
+        Document document,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(projectContext);
+        ArgumentNullException.ThrowIfNull(document);
+
+        if (!document.Project.Id.Equals(
+                projectContext.Project.Id))
+        {
+            throw new ArgumentException(
+                "The document does not belong to the provided project.",
+                nameof(document));
+        }
+
         if (document.FilePath is null)
         {
             return null;
         }
 
         var syntaxRoot =
-            await document.GetSyntaxRootAsync(cancellationToken);
+            await document.GetSyntaxRootAsync(
+                cancellationToken);
 
         if (syntaxRoot is null)
         {
@@ -47,14 +84,11 @@ public sealed class DocumentAnalysisContext
         }
 
         var semanticModel =
-            await document.GetSemanticModelAsync(cancellationToken);
-
-        if (semanticModel is null)
-        {
-            return null;
-        }
+            projectContext.Compilation.GetSemanticModel(
+                syntaxRoot.SyntaxTree);
 
         return new DocumentAnalysisContext(
+            projectContext,
             document,
             document.FilePath,
             syntaxRoot,

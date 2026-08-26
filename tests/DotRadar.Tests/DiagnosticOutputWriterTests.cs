@@ -153,7 +153,7 @@ public sealed class DiagnosticOutputWriterTests
             var report = new DiagnosticReport(
                 diagnostics: [diagnostic],
 
-                rules: RuleRegistry.CreateDefault()
+                rules: RuleRegistry.CreateDefault().AllRules
                     .Select(rule => rule.Descriptor)
                     .ToArray(),
 
@@ -221,7 +221,7 @@ public sealed class DiagnosticOutputWriterTests
         return new DiagnosticReport(
             diagnostics: diagnostics,
 
-            rules: RuleRegistry.CreateDefault()
+            rules: RuleRegistry.CreateDefault().AllRules
                 .Select(rule => rule.Descriptor)
                 .ToArray(),
 
