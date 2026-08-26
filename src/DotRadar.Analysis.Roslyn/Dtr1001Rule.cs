@@ -28,26 +28,19 @@ public sealed class Dtr1001Rule : IDotRadarRule
 
     public DotRadarRuleDescriptor Descriptor => RuleDescriptor;
 
-    public async Task<IReadOnlyList<DotRadarDiagnostic>> AnalyzeAsync(
-        Document document,
+    public ValueTask<
+    IReadOnlyList<DotRadarDiagnostic>> AnalyzeAsync(
+        DocumentAnalysisContext context,
         CancellationToken cancellationToken)
     {
-        if (document.FilePath is null ||
-            IsGeneratedFile(document.FilePath))
+        if (IsGeneratedFile(context.FilePath))
         {
-            return [];
+            return ValueTask.FromResult<
+                IReadOnlyList<DotRadarDiagnostic>>([]);
         }
 
-        var syntaxRoot =
-            await document.GetSyntaxRootAsync(cancellationToken);
-
-        var semanticModel =
-            await document.GetSemanticModelAsync(cancellationToken);
-
-        if (syntaxRoot is null || semanticModel is null)
-        {
-            return [];
-        }
+        var syntaxRoot = context.SyntaxRoot;
+        var semanticModel = context.SemanticModel;
 
         var diagnostics = new List<DotRadarDiagnostic>();
 
@@ -72,11 +65,12 @@ public sealed class Dtr1001Rule : IDotRadarRule
             }
 
             diagnostics.Add(CreateDiagnostic(
-                document.FilePath,
+                context.FilePath,
                 creation));
         }
 
-        return diagnostics;
+        return ValueTask.FromResult<
+                IReadOnlyList<DotRadarDiagnostic>>(diagnostics);
     }
 
     private static bool IsHttpClient(INamedTypeSymbol type)

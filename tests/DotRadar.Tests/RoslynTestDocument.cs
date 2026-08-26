@@ -11,7 +11,7 @@ internal static class RoslynTestDocument
 
     public static Document Create(
         string source,
-        string filePath = "Test.cs")
+        string? filePath = "Test.cs")
     {
         var workspace = new AdhocWorkspace();
 
@@ -27,9 +27,11 @@ internal static class RoslynTestDocument
             .AddMetadataReferences(FrameworkReferences);
 
         return project.AddDocument(
-            Path.GetFileName(filePath),
-            SourceText.From(source),
-            filePath: filePath);
+                filePath is null
+                    ? "Test.cs"
+                    : Path.GetFileName(filePath),
+                SourceText.From(source),
+                filePath: filePath);
     }
 
     private static IReadOnlyList<MetadataReference>

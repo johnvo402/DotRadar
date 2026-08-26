@@ -1,7 +1,5 @@
 using DotRadar.Abstractions;
 
-using Microsoft.CodeAnalysis;
-
 namespace DotRadar.Analysis.Roslyn;
 
 public interface IDotRadarRule
@@ -10,7 +8,7 @@ public interface IDotRadarRule
 
     DotRadarRuleDescriptor Descriptor { get; }
 
-    Task<IReadOnlyList<DotRadarDiagnostic>> AnalyzeAsync(
-        Document document,
+    ValueTask<IReadOnlyList<DotRadarDiagnostic>> AnalyzeAsync(
+        DocumentAnalysisContext context,
         CancellationToken cancellationToken);
 }

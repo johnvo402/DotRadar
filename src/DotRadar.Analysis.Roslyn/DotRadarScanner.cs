@@ -34,18 +34,28 @@ public sealed class DotRadarScanner
         var diagnostics = new List<DotRadarDiagnostic>();
 
         foreach (var project in solution.Projects
-                     .Where(project =>
-                         project.Language == LanguageNames.CSharp))
+             .Where(project =>
+                 project.Language == LanguageNames.CSharp))
         {
             foreach (var document in project.Documents)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
+                var context =
+                    await DocumentAnalysisContext.CreateAsync(
+                        document,
+                        cancellationToken);
+
+                if (context is null)
+                {
+                    continue;
+                }
+
                 foreach (var rule in _rules)
                 {
                     var ruleDiagnostics =
                         await rule.AnalyzeAsync(
-                            document,
+                            context,
                             cancellationToken);
 
                     diagnostics.AddRange(ruleDiagnostics);
