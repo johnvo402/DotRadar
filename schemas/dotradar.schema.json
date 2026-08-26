@@ -26,6 +26,10 @@
         "DTR1201": {
           "$ref": "#/$defs/ruleConfiguration",
           "description": "Avoid creating HttpClient per operation."
+        },
+        "DTR1103": {
+          "$ref": "#/$defs/ruleConfiguration",
+          "description": "Avoid async void methods."
         }
       }
     }

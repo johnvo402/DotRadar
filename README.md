@@ -66,6 +66,7 @@ dotradar scan . --format sarif > dotradar.sarif
 | [DTR1101](docs/rules/DTR1101.md) | Avoid blocking on asynchronous operations | Warning          |
 | [DTR1102](docs/rules/DTR1102.md) | CancellationToken parameter is not used   | Warning          |
 | [DTR1201](docs/rules/DTR1201.md) | Avoid creating HttpClient per operation   | Warning          |
+| [DTR1103](docs/rules/DTR1103.md) | Avoid async void methods                  | Warning          |
 
 ## Configuration
 

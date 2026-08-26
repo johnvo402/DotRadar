@@ -73,4 +73,14 @@ public sealed class RuleRegistryTests
             rules,
             rule => rule.RuleId == "DTR1201");
     }
+
+    [Fact]
+    public void Default_rules_include_DTR1103()
+    {
+        var rules = RuleRegistry.CreateDefault();
+
+        Assert.Contains(
+            rules,
+            rule => rule.RuleId == "DTR1103");
+    }
 }
