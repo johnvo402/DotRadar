@@ -23,7 +23,7 @@
           "$ref": "#/$defs/ruleConfiguration",
           "description": "CancellationToken parameter is not used."
         },
-        "DTR1201": {
+        "DTR1001": {
           "$ref": "#/$defs/ruleConfiguration",
           "description": "Avoid creating HttpClient per operation."
         },

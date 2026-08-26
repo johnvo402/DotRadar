@@ -4,7 +4,7 @@ using Xunit;
 
 namespace DotRadar.Tests;
 
-public sealed class Dtr1201RuleTests
+public sealed class DTR1001RuleTests
 {
     [Fact]
     public async Task Reports_HttpClient_created_inside_method()
@@ -24,14 +24,14 @@ public sealed class Dtr1201RuleTests
             }
             """;
 
-        var diagnostics = await new Dtr1201Rule()
+        var diagnostics = await new DTR1001Rule()
             .AnalyzeAsync(
                 RoslynTestDocument.Create(source),
                 CancellationToken.None);
 
         var diagnostic = Assert.Single(diagnostics);
 
-        Assert.Equal("DTR1201", diagnostic.RuleId);
+        Assert.Equal("DTR1001", diagnostic.RuleId);
         Assert.Contains(
             "IHttpClientFactory",
             diagnostic.Message);
@@ -52,7 +52,7 @@ public sealed class Dtr1201RuleTests
             }
             """;
 
-        var diagnostics = await new Dtr1201Rule()
+        var diagnostics = await new DTR1001Rule()
             .AnalyzeAsync(
                 RoslynTestDocument.Create(source),
                 CancellationToken.None);
@@ -77,7 +77,7 @@ public sealed class Dtr1201RuleTests
             }
             """;
 
-        var diagnostics = await new Dtr1201Rule()
+        var diagnostics = await new DTR1001Rule()
             .AnalyzeAsync(
                 RoslynTestDocument.Create(source),
                 CancellationToken.None);
@@ -97,7 +97,7 @@ public sealed class Dtr1201RuleTests
             }
             """;
 
-        var diagnostics = await new Dtr1201Rule()
+        var diagnostics = await new DTR1001Rule()
             .AnalyzeAsync(
                 RoslynTestDocument.Create(source),
                 CancellationToken.None);
@@ -124,7 +124,7 @@ public sealed class Dtr1201RuleTests
             source,
             filePath: "Service.g.cs");
 
-        var diagnostics = await new Dtr1201Rule()
+        var diagnostics = await new DTR1001Rule()
             .AnalyzeAsync(
                 document,
                 CancellationToken.None);

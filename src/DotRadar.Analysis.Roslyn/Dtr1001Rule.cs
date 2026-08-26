@@ -5,9 +5,9 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace DotRadar.Analysis.Roslyn;
 
-public sealed class Dtr1201Rule : IDotRadarRule
+public sealed class DTR1001Rule : IDotRadarRule
 {
-    private const string DiagnosticId = "DTR1201";
+    private const string DiagnosticId = "DTR1001";
 
     private const string Title =
         "Avoid creating HttpClient per operation";
@@ -21,7 +21,7 @@ public sealed class Dtr1201Rule : IDotRadarRule
                 "local functions, accessors, or anonymous functions.",
             category: DotRadarCategory.Reliability,
             defaultSeverity: DotRadarSeverity.Warning,
-            documentationPath: "docs/rules/DTR1201.md");
+            documentationPath: "docs/rules/DTR1001.md");
 
     public string RuleId => DiagnosticId;
 

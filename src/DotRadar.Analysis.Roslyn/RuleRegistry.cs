@@ -9,7 +9,7 @@ public static class RuleRegistry
             new Dtr1101Rule(),
             new Dtr1102Rule(),
             new Dtr1103Rule(),
-            new Dtr1201Rule()
+            new DTR1001Rule()
         ];
     }
 }
