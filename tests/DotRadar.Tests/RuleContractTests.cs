@@ -21,7 +21,7 @@ public sealed class RuleContractTests
 
         Assert.NotEmpty(ruleSet.DocumentRules);
         Assert.Empty(ruleSet.ProjectRules);
-
+        Assert.Empty(ruleSet.FileRules);
         Assert.All(
             ruleSet.DocumentRules,
             rule => Assert.IsAssignableFrom<IDocumentRule>(rule));
@@ -33,5 +33,13 @@ public sealed class RuleContractTests
         Assert.True(
             typeof(IDotRadarRule)
                 .IsAssignableFrom(typeof(IProjectRule)));
+    }
+
+    [Fact]
+    public void File_rule_inherits_base_rule_contract()
+    {
+        Assert.True(
+            typeof(IDotRadarRule)
+                .IsAssignableFrom(typeof(IFileRule)));
     }
 }

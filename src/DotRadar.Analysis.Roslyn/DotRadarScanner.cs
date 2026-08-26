@@ -54,6 +54,10 @@ public sealed class DotRadarScanner
 
                 diagnostics.AddRange(ruleDiagnostics);
             }
+            await AnalyzeFilesAsync(
+                projectContext,
+                diagnostics,
+                cancellationToken);
 
             foreach (var document in project.Documents)
             {
@@ -89,7 +93,55 @@ public sealed class DotRadarScanner
             .ThenBy(diagnostic => diagnostic.RuleId)
             .ToArray();
     }
+    private async Task AnalyzeFilesAsync(
+        ProjectAnalysisContext projectContext,
+        List<DotRadarDiagnostic> diagnostics,
+        CancellationToken cancellationToken)
+    {
+        if (_rules.FileRules.Count == 0)
+        {
+            return;
+        }
 
+        var filePaths =
+            ProjectFileDiscovery.FindConfigurationFiles(
+                projectContext.FilePath);
+
+        foreach (var filePath in filePaths)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var applicableRules = _rules.FileRules
+                .Where(rule => rule.CanAnalyze(filePath))
+                .ToArray();
+
+            if (applicableRules.Length == 0)
+            {
+                continue;
+            }
+
+            var fileContext =
+                await FileAnalysisContext.CreateAsync(
+                    projectContext,
+                    filePath,
+                    cancellationToken);
+
+            if (fileContext is null)
+            {
+                continue;
+            }
+
+            foreach (var rule in applicableRules)
+            {
+                var ruleDiagnostics =
+                    await rule.AnalyzeAsync(
+                        fileContext,
+                        cancellationToken);
+
+                diagnostics.AddRange(ruleDiagnostics);
+            }
+        }
+    }
     private static async Task<Solution> LoadSolutionAsync(
         MSBuildWorkspace workspace,
         string targetPath,

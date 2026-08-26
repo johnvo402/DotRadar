@@ -4,7 +4,8 @@ public sealed class RuleSet
 {
     public RuleSet(
         IEnumerable<IDocumentRule>? documentRules = null,
-        IEnumerable<IProjectRule>? projectRules = null)
+        IEnumerable<IProjectRule>? projectRules = null,
+        IEnumerable<IFileRule>? fileRules = null)
     {
         DocumentRules = (
             documentRules ??
@@ -16,10 +17,17 @@ public sealed class RuleSet
             Array.Empty<IProjectRule>())
             .ToArray();
 
+        FileRules = (
+            fileRules ??
+            Array.Empty<IFileRule>())
+            .ToArray();
+
         AllRules = DocumentRules
             .Cast<IDotRadarRule>()
             .Concat(
                 ProjectRules.Cast<IDotRadarRule>())
+            .Concat(
+                FileRules.Cast<IDotRadarRule>())
             .ToArray();
 
         ValidateRuleIds(AllRules);
@@ -28,6 +36,8 @@ public sealed class RuleSet
     public IReadOnlyList<IDocumentRule> DocumentRules { get; }
 
     public IReadOnlyList<IProjectRule> ProjectRules { get; }
+
+    public IReadOnlyList<IFileRule> FileRules { get; }
 
     public IReadOnlyList<IDotRadarRule> AllRules { get; }
 
@@ -41,6 +51,9 @@ public sealed class RuleSet
                 rule => predicate(rule)),
 
             projectRules: ProjectRules.Where(
+                rule => predicate(rule)),
+
+            fileRules: FileRules.Where(
                 rule => predicate(rule)));
     }
 
