@@ -2,7 +2,7 @@ namespace DotRadar.Analysis.Roslyn;
 
 public static class RuleRegistry
 {
-    public static IReadOnlyList<IDotRadarRule> CreateDefault()
+    public static IReadOnlyList<IDocumentRule> CreateDefault()
     {
         return
         [

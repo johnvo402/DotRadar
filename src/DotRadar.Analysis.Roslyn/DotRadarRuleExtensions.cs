@@ -8,7 +8,7 @@ public static class DotRadarRuleExtensions
 {
     public static async Task<
         IReadOnlyList<DotRadarDiagnostic>> AnalyzeAsync(
-        this IDotRadarRule rule,
+        this IDocumentRule rule,
         Document document,
         CancellationToken cancellationToken)
     {

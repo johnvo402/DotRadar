@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace DotRadar.Analysis.Roslyn;
 
-public sealed class Dtr1001Rule : IDotRadarRule
+public sealed class Dtr1001Rule : IDocumentRule
 {
     private const string DiagnosticId = "DTR1001";
 
@@ -30,8 +30,8 @@ public sealed class Dtr1001Rule : IDotRadarRule
 
     public ValueTask<
     IReadOnlyList<DotRadarDiagnostic>> AnalyzeAsync(
-        DocumentAnalysisContext context,
-        CancellationToken cancellationToken)
+    DocumentAnalysisContext context,
+    CancellationToken cancellationToken)
     {
         if (IsGeneratedFile(context.FilePath))
         {
@@ -70,7 +70,7 @@ public sealed class Dtr1001Rule : IDotRadarRule
         }
 
         return ValueTask.FromResult<
-                IReadOnlyList<DotRadarDiagnostic>>(diagnostics);
+            IReadOnlyList<DotRadarDiagnostic>>(diagnostics);
     }
 
     private static bool IsHttpClient(INamedTypeSymbol type)

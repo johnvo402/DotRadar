@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace DotRadar.Analysis.Roslyn;
 
-public sealed class Dtr1102Rule : IDotRadarRule
+public sealed class Dtr1102Rule : IDocumentRule
 {
     private const string DiagnosticId = "DTR1102";
 

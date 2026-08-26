@@ -7,8 +7,4 @@ public interface IDotRadarRule
     string RuleId { get; }
 
     DotRadarRuleDescriptor Descriptor { get; }
-
-    ValueTask<IReadOnlyList<DotRadarDiagnostic>> AnalyzeAsync(
-        DocumentAnalysisContext context,
-        CancellationToken cancellationToken);
 }

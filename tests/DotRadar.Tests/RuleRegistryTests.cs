@@ -34,7 +34,7 @@ public sealed class RuleRegistryTests
     [Fact]
     public void Scanner_rejects_duplicate_rule_ids()
     {
-        var duplicateRules = new IDotRadarRule[]
+        var duplicateRules = new IDocumentRule[]
         {
             new Dtr1101Rule(),
             new Dtr1101Rule()

@@ -7,10 +7,10 @@ namespace DotRadar.Analysis.Roslyn;
 
 public sealed class DotRadarScanner
 {
-    private readonly IReadOnlyList<IDotRadarRule> _rules;
+    private readonly IReadOnlyList<IDocumentRule> _rules;
 
     public DotRadarScanner(
-        IEnumerable<IDotRadarRule>? rules = null)
+    IEnumerable<IDocumentRule>? rules = null)
     {
         _rules = (rules ?? RuleRegistry.CreateDefault())
             .ToArray();
@@ -95,7 +95,7 @@ public sealed class DotRadarScanner
     }
 
     private static void ValidateRules(
-        IReadOnlyList<IDotRadarRule> rules)
+    IReadOnlyList<IDocumentRule> rules)
     {
         var duplicateRuleId = rules
             .GroupBy(
